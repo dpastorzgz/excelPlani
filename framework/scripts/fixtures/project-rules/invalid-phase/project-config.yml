@@ -1,0 +1,5 @@
+project: "fixture-invalid-phase"
+guidelines:
+  - file: "rules.md"
+    description: "Phase 99 is out of range"
+    phases: [05, 99]

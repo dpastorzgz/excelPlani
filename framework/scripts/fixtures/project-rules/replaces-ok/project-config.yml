@@ -1,0 +1,6 @@
+project: "fixture-replaces-ok"
+guidelines:
+  - file: "rules.md"
+    description: "Replaces an existing technology prose guideline"
+    phases: [05]
+    replaces: "technology-rules/salesforce/NamingConventions.md"

@@ -1,0 +1,145 @@
+# tech-config.yml — Technology Configuration Template
+# Framework version: 1.6
+# Last updated: 2026-09-18
+#
+# Instructions:
+#   Copy this file to technology-rules/[your-technology]/tech-config.yml
+#   Fill in every field. Remove fields marked OPTIONAL if not applicable.
+#   Fields marked REQUIRED must always have a value.
+#
+# Schema documentation: all valid keys, types, and accepted values are
+# documented inline with comments below.
+
+# ─────────────────────────────────────────────
+# IDENTITY
+# ─────────────────────────────────────────────
+
+# REQUIRED — Machine-readable identifier. Use lowercase-kebab-case.
+# Examples: salesforce, nodejs, react, python-django
+technology: "{{technology_slug}}"
+
+# REQUIRED — Human-readable display name.
+display_name: "{{Technology Display Name}}"
+
+# REQUIRED — Semantic version of these technology rules.
+# Increment when rules change. Format: MAJOR.MINOR.PATCH
+version: "1.0.0"
+
+# ─────────────────────────────────────────────
+# LANGUAGE AND RUNTIME
+# ─────────────────────────────────────────────
+
+# REQUIRED — Primary programming language.
+language: "{{language}}"           # e.g., apex, javascript, typescript, python
+
+# OPTIONAL — Runtime version constraint. Use semver range syntax.
+runtime_version: "{{version}}"    # e.g., ">=58.0" (Salesforce API), ">=18.0" (Node)
+
+# OPTIONAL — Secondary languages used (e.g., HTML, CSS for frontend stacks).
+secondary_languages:
+  - "{{lang1}}"
+  - "{{lang2}}"
+
+# ─────────────────────────────────────────────
+# TESTING
+# ─────────────────────────────────────────────
+
+testing:
+  # REQUIRED — Minimum code coverage percentage (0–100).
+  coverage_threshold: 75
+
+  # REQUIRED — Test framework name.
+  framework: "{{test_framework}}"  # e.g., "Apex Test", "Jest", "Pytest", "JUnit"
+
+  # REQUIRED — CLI command to run all tests.
+  run_command: "{{test_command}}"  # e.g., "sf apex run test --target-org myOrg"
+
+  # OPTIONAL — CLI command to run tests with coverage report.
+  coverage_command: "{{coverage_command}}"
+
+  # OPTIONAL — Whether integration tests are required (true/false).
+  integration_tests_required: false
+
+  # OPTIONAL — Whether end-to-end tests are required (true/false).
+  e2e_tests_required: false
+
+# ─────────────────────────────────────────────
+# LINTING AND CODE QUALITY
+# ─────────────────────────────────────────────
+
+linting:
+  # OPTIONAL — Linting tool name.
+  tool: "{{linting_tool}}"        # e.g., "PMD", "ESLint", "Pylint", "Checkstyle"
+
+  # OPTIONAL — Path to linting configuration file (relative to project root).
+  config_file: "{{config_path}}"  # e.g., ".eslintrc.json", "pmd-ruleset.xml"
+
+  # OPTIONAL — CLI command to run linter.
+  run_command: "{{lint_command}}"
+
+  # OPTIONAL — Whether linting failures block the build (true/false).
+  blocking: true
+
+# ─────────────────────────────────────────────
+# DEPLOYMENT
+# ─────────────────────────────────────────────
+
+deployment:
+  # REQUIRED — CLI tool used for deployment.
+  tool: "{{deploy_tool}}"         # e.g., "sf", "npm", "docker", "kubectl"
+
+  # REQUIRED — Deploy command template.
+  deploy_command: "{{deploy_cmd}}"
+
+  # OPTIONAL — Validate-only command (dry run without executing deploy).
+  validate_command: "{{validate_cmd}}"
+
+  # OPTIONAL — Environment progression order (from left to right = dev to prod).
+  environments:
+    - "{{env_1}}"                 # e.g., "scratch-org", "sandbox", "staging", "production"
+    - "{{env_2}}"
+
+  # OPTIONAL — Whether production deploys require manual approval (true/false).
+  production_requires_approval: true
+
+# ─────────────────────────────────────────────
+# VERSION CONTROL
+# ─────────────────────────────────────────────
+
+version_control:
+  # OPTIONAL — Branch naming pattern (regex or glob).
+  branch_pattern: "{{pattern}}"   # e.g., "feature/*", "feat/{{issue}}-{{description}}"
+
+  # OPTIONAL — Default merge strategy.
+  # Accepted values: merge | squash | rebase
+  merge_strategy: squash
+
+  # OPTIONAL — Minimum number of PR approvals required before merge.
+  min_approvals: 1
+
+# ─────────────────────────────────────────────
+# GUIDELINES FILES
+# ─────────────────────────────────────────────
+
+# OPTIONAL — List of guideline files in this technology-rules folder.
+# Each entry describes the file and which phases it applies to.
+# Only `NamingConventions.md` is expected by default; add a
+# `GeneralGuidelines.md` entry only when the stack actually needs one.
+guidelines:
+  - file: "NamingConventions.md"
+    description: "Naming standards for all artifacts"
+    phases: [03, 04, 05]
+  # - file: "GeneralGuidelines.md"
+  #   description: "General coding standards"
+  #   phases: [01, 02, 03, 04, 05]
+  # Add more as needed
+
+# ─────────────────────────────────────────────
+# EXTERNAL REFERENCES
+# ─────────────────────────────────────────────
+
+# OPTIONAL — Links to official documentation and style guides.
+references:
+  official_docs: "{{docs_url}}"
+  style_guide: "{{style_url}}"
+  changelog: "{{changelog_url}}"

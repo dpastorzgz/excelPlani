@@ -1,0 +1,6 @@
+project: "fixture-replaces-gates"
+guidelines:
+  - file: "rules.md"
+    description: "Replaces a quality-gates file (forbidden)"
+    phases: [05]
+    replaces: "technology-rules/salesforce/quality-gates.md"

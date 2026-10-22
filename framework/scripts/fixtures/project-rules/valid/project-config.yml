@@ -1,0 +1,12 @@
+project: "fixture-valid"
+display_name: "Fixture Valid"
+version: "1.0.0"
+quality_gates:
+  prefix: "PRG"
+guidelines:
+  - file: "rules.md"
+    description: "Fixture project rules"
+    phases: [03, 04, 05]
+  - file: "quality-gates.md"
+    description: "Fixture project gates"
+    phases: [05]

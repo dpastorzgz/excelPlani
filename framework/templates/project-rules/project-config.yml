@@ -1,0 +1,56 @@
+# Project Rules Overlay — configuration
+# Copy this directory to the repo root as `project-rules/` and fill it in.
+#
+# `guidelines[]` is the single source of truth for which project guideline files
+# load in which phases. It mirrors
+# technology-rules/[technology]/tech-config.yml:guidelines[].
+#
+# If `project-rules/project-config.yml` does not exist, the overlay is inactive
+# and the framework behaves exactly as before (technology + framework only).
+# Project rules may only ADD or TIGHTEN; they never relax technology/framework.
+
+project: "{{project_slug}}"          # stable slug of the consuming repo/product
+display_name: "{{project_name}}"
+version: "1.0.0"
+
+# Optional: note the primary technology this overlay refines (informational).
+extends_technology: []
+#  - "salesforce"
+
+# Project quality gates use the PRG<phase>.<n> namespace (e.g. PRG5.1) so they
+# never collide with framework (QG*) or technology (SFG*/DPPG*) gate IDs.
+quality_gates:
+  prefix: "PRG"
+
+guidelines:
+  # --- Always-relevant project rules (loaded in the phases you declare) ---
+  - file: "rules.md"
+    description: "Project-wide conventions (add/tighten only)."
+    phases: [03, 04, 05, 06, 07, 09]
+
+  # --- Example: project naming conventions that REPLACE the technology file ---
+  # When `replaces` is set, the referenced base file is NOT loaded (no duplicate
+  # context). `replaces` may only target a technology prose guideline — never a
+  # `quality-gates.md`, never anything under `framework/`.
+  # - file: "NamingConventions.md"
+  #   description: "Project naming conventions (supersedes the tech file)."
+  #   phases: [03, 04, 05, 06]
+  #   replaces: "technology-rules/salesforce/NamingConventions.md"
+
+  # --- Example: additive project guideline (extends the base set) ---
+  # `extends: true` is the default when neither `replaces` nor `extends` is set.
+  # - file: "extra-gates.md"
+  #   description: "Project-specific hardening on top of the base rules."
+  #   phases: [05, 06]
+  #   extends: true
+
+  # --- Project gates (additive; base technology/framework gates always load) ---
+  - file: "quality-gates.md"
+    description: "Project gates (PRG*) added on top of technology/framework gates."
+    phases: [02, 03, 04, 05, 06, 07, 09]
+
+# Optional: living technical documentation (see project-documentation skill).
+# technical_documentation:
+#   enabled: true
+#   root: docs/
+#   index: docs/README.md

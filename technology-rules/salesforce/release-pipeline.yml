@@ -1,0 +1,157 @@
+# Salesforce Release Pipeline Configuration
+#
+# Purpose:
+# - Define the ordered environment pipeline (alias/name only; no sandbox type required)
+# - Define the test strategy per hop
+# - Define what evidence must be recorded in Phase 09 release notes
+#
+# This file is referenced by:
+# - technology-rules/salesforce/rules.md (Phase 09 — Release)
+#
+# Notes:
+# - "env" values are org aliases/names as used by the Salesforce CLI (sf).
+# - If the pipeline is project-specific, duplicate this file under the project folder
+#   and reference it from the project context.
+
+version: 1
+
+verification:
+  static_analysis:
+    required: true
+    tools:
+      - name: pmd
+        description: Apex static analysis (PMD priority gate + Salesforce Code Analyzer report)
+        fail_on_priority: 2
+        ruleset: ".pmd/ruleset.xml"
+        gate_command: "pmd check -R .pmd/ruleset.xml -d force-app/main/default --minimum-priority 2 --format text"
+        report_command: "sf scanner run --target force-app/main/default --engine pmd,eslint --normalize-severity"
+      - name: eslint
+        description: LWC JavaScript static analysis
+        fail_on_error: true
+    policy: >
+      Phase 06 cannot be approved unless both PMD and ESLint have been executed
+      and no blocking violations are present. For PMD, only rules declared P1 or
+      P2 in `.pmd/ruleset.xml` block (enforced with `--minimum-priority 2`); P3+
+      findings are reported by Salesforce Code Analyzer and triaged, not blocking.
+      PMD priority mapping in Code Analyzer: P1 -> High, P2/P3 -> Moderate,
+      P4/P5 -> Low; PMD never produces Critical.
+
+pipeline:
+  # Ordered environments. Use aliases that exist in your team / CI.
+  # Default practice is sandboxes; the exact org type is per-project configuration
+  # (see tech-config.yml:deployment.environments), never hardcoded in commands.
+  target_org_policy: "Phase 5 uses the configured default org (sf config set target-org); Phase 7/9/CI pass --target-org explicitly."
+  release_artifact: "work-item/[project-slug]/05-build/package.xml (manifest-first; --source-dir force-app deprecated, exception only with written sign-off per SFG5.14)"
+  environments:
+    - env: dev
+      description: Developer integration environment (source development)
+    - env: int
+      description: Shared integration environment
+    - env: uat
+      description: User acceptance environment
+    - env: production
+      description: Production
+
+  # How to select the "next environment" for a release.
+  # Implementation depends on your process; this is a policy definition.
+  next_environment_rule:
+    type: manual_approval
+    details: >
+      The next environment is chosen by release manager approval, based on the
+      current pipeline position and the target branch/tag.
+
+test_strategy:
+  # Test strategy by hop.
+  # Allowed test_level values: NoTestRun | RunRelevantTests | RunLocalTests | RunSpecifiedTests
+  #
+  # validate_interactive (per hop):
+  #   true  → before validating, the agent MUST ask the user to choose the
+  #           test strategy (RunSpecifiedTests vs RunLocalTests) from
+  #           validate_test_levels; after a successful validate it MUST ask
+  #           whether to proceed with the deploy or not. No validate runs and
+  #           no deploy runs until the user answers. See
+  #           `deploy-protocol.md` §5.1 for the canonical protocol.
+  #   false → the hop runs the configured `test_level` automatically
+  #           (legacy behavior).
+  #
+  # specific_tests_source (defined in `validate_interaction` below): how the
+  #   agent proposes the `--tests` list when the user picks RunSpecifiedTests.
+  #   modified_metadata → derive the `*Test` classes from the Apex members of
+  #   the release manifest (ApexClass / ApexTrigger) and let the user confirm
+  #   or edit the list.
+  hops:
+    - from: dev
+      to: int
+      validate_before_deploy: true
+      test_level: RunRelevantTests
+      validate_interactive: false
+    - from: int
+      to: uat
+      validate_before_deploy: true
+      test_level: RunLocalTests
+      validate_interactive: false
+    - from: uat
+      to: production
+      validate_before_deploy: true
+      test_level: RunLocalTests
+      validate_interactive: true
+      quick_deploy_allowed: true
+      quick_deploy_window_days: 10
+
+# Interactive-validate policy (Phase 09). Applies only to hops with
+# validate_interactive: true. The two questions below are mandatory and must
+# not be replaced by a bare yes/no prompt; use the structured question protocol
+# from AGENTS.md (2-4 concrete options).
+validate_interaction:
+  enabled_field: validate_interactive
+  # Optional per-hop override: add `validate_test_levels: [...]` to a hop to change
+  # the offered options; otherwise `default_test_level_options` applies.
+  test_level_options_field: validate_test_levels
+  default_test_level_options:
+    - RunSpecifiedTests
+    - RunLocalTests
+  specific_tests_source: modified_metadata
+  questions:
+    - id: test_level
+      when: before_validate
+      question: >
+        How should the release validation run for this hop — specified tests
+        or all local tests?
+      options:
+        - label: RunSpecifiedTests
+          description: >
+            Run only the Apex test classes derived from the modified Apex
+            metadata in the release manifest. The agent proposes the list and
+            the user confirms or edits it.
+        - label: RunLocalTests
+          description: Run all local Apex tests in the target org.
+    - id: deploy
+      when: after_successful_validate
+      question: >
+        Validation succeeded. Do you want to deploy now, or keep the validated
+        job for a later quick deploy?
+      options:
+        - label: deploy_now
+          description: >
+            Deploy the validated manifest now (sf project deploy start, or
+            sf project deploy quick when within the quick-deploy window).
+        - label: skip_deploy
+          description: >
+            Do not deploy. Record the validation as complete, keep the
+            validate_job_id for a later quick deploy, and end the phase
+            without running start.
+  on_validate_failure: stop_no_deploy_prompt
+  on_deploy_skipped: record_validate_only   # release-notes records deploy as skipped by user
+
+evidence_requirements:
+  # Evidence that must be referenced in work-item/[project-slug]/09-release/release-notes.md
+  required_links:
+    - work-item/[project-slug]/05-build/build-log.md
+    - work-item/[project-slug]/06-verification/verification-report.md
+    - work-item/[project-slug]/07-testing/test-report.md
+  required_job_ids:
+    - validate_job_id
+    - deploy_job_id
+  additional_notes:
+    - Record the org alias used for the target environment.
+    - Record the test strategy executed for the hop (as defined above).

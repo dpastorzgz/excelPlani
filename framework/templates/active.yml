@@ -1,0 +1,57 @@
+# active.yml — Project state file
+# Copy to: work-item/[project-slug]/active.yml
+# Update this file as the project advances through phases.
+
+# ── Project identity ──────────────────────────────────────────────
+project_slug: "{{project_slug}}"
+project_name: "{{project_name}}"
+created: "{{date}}"
+updated: "{{date}}"
+
+# ── Track ─────────────────────────────────────────────────────────
+# Allowed values: new-feature | change-request | hotfix
+track: "{{track}}"
+
+# ── Technology stack ──────────────────────────────────────────────
+# Must match a directory under technology-rules/
+# Example: salesforce | react | nodejs | python
+technology: "{{technology}}"
+framework_version: "1.5.0"  # framework release this work-item runs under
+
+# ── Current state ─────────────────────────────────────────────────
+# Allowed values: active | blocked | on-hold | closed | archived
+# closed = logical terminal state after physical move to work-item/archive/ (Phase 10); archived = moved + commit recorded
+status: active
+
+# Current phase number (1–10). Update when advancing.
+current_phase: 1
+
+# Brief description of current phase status.
+phase_status: "Phase 1 — Proposal / Intake in progress"
+
+# ── Phase completion log ──────────────────────────────────────────
+# Record each phase when it is approved and closed.
+phases_completed: []
+# Example entry:
+#   - phase: 1
+#     completed_at: "YYYY-MM-DD"
+#     artifact: "01-proposal/proposal.md"
+#     approved_by: "user"
+
+# ── Skipped phases ──
+phases_skipped: []  # e.g. [{phase: 3, reason: "...", approved_by: "user", date: "YYYY-MM-DD"}]
+
+# ── Blockers ──────────────────────────────────────────────────────
+blockers: []
+# Example entry:
+#   - id: "BLOCKER-001"
+#     description: "Missing API credentials"
+#     opened_at: "YYYY-MM-DD"
+#     resolved_at: null
+# ── Epic hierarchy (v1.4, all fields optional) ───────────────────────
+# type: epic = parent breakdown owner (Phases 1–2 + epic-map.yml, 3–9 delegated)
+# type: feature = standalone or epic child (full 10-phase cycle)
+type: feature  # epic | feature
+parent_epic: null  # epic slug when type is feature and this item is a child
+depends_on: []  # child slugs that must reach Phase 7 (tested) before this item enters Phase 5
+wave: 0  # non-negative integer; children in the same wave may run in parallel

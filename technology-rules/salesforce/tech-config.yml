@@ -1,0 +1,175 @@
+# Technology configuration (Salesforce)
+# Schema: canonical (aligned with technology-rules/_template/tech-config.yml).
+# guidelines[] is the single source of truth for which files load in which phases
+# (see framework/config/context-routing.yml).
+
+technology: "salesforce"
+display_name: "Salesforce"
+version: "1.1.0"
+
+language: "apex"
+runtime_version: ">=59.0"
+secondary_languages:
+  - "javascript"
+  - "html"
+  - "css"
+  - "xml"
+
+testing:
+  coverage_threshold: 85
+  platform_min: 75
+  project_target: 85
+  critical_target: 90
+  framework: "Apex Test"
+  run_command: "sf apex run test --test-level RunLocalTests --code-coverage --result-format human"
+  coverage_command: "sf apex run test --test-level RunLocalTests --code-coverage --result-format json"
+  integration_tests_required: false
+  e2e_tests_required: false
+
+linting:
+  tool: "PMD + ESLint (Salesforce Code Analyzer)"
+  config_file: ".pmd/ruleset.xml"
+  # Report first (P1-P5 evidence, non-blocking), then the blocking gate last so
+  # the command exit code reflects the P1/P2 gate (PMD exit 4 = violation).
+  run_command: "sf scanner run --target force-app/main/default --engine pmd,eslint --normalize-severity; pmd check -R .pmd/ruleset.xml -d force-app/main/default --minimum-priority 2 --format text"
+  blocking: true
+
+deployment:
+  tool: "sf"
+  deploy_command: "sf project deploy start --manifest work-item/[project-slug]/05-build/package.xml --test-level NoTestRun"
+  validate_command: "sf project deploy validate --manifest work-item/[project-slug]/05-build/package.xml --test-level RunLocalTests"
+  validate_specified_command: "sf project deploy validate --manifest work-item/[project-slug]/05-build/package.xml --test-level RunSpecifiedTests --tests <TestClassA,TestClassB>"
+  validation_interaction:
+    config_source: "technology-rules/salesforce/release-pipeline.yml (validate_interaction)"
+    test_level_options: ["RunSpecifiedTests", "RunLocalTests"]
+    specific_tests_source: "modified_metadata"
+    protocol: "Interactive validate: ask test level → validate → ask deploy (see deploy-protocol.md §5.1). Gated per hop by validate_interactive."
+  target_org_policy: "use configured default org in Phase 5 (sf config set target-org); explicit --target-org in Phase 7/9/CI"
+  environments:
+    - "dev"
+    - "int"
+    - "uat"
+    - "production"
+  production_requires_approval: true
+  release_artifact: "work-item/[project-slug]/05-build/package.xml (manifest-first; --source-dir force-app deprecated, exception only with written sign-off)"
+
+version_control:
+  merge_strategy: squash
+  min_approvals: 1
+
+commands:
+  deploy:
+    description: "Deploy a specific metadata artifact (Phase 5 — compilation check, no tests)"
+    command: "sf project deploy start -d force-app/main/default/[exact-path] --test-level NoTestRun"
+    note: >
+      Replace [exact-path] with the concrete artifact path, e.g.:
+        objects/MyObject__c
+        classes/MyApexClass.cls
+        lwc/myComponent
+        flows/MyFlow.flow-meta.xml
+      Never deploy a full type directory (e.g., classes/) — always target the specific artifact.
+  deploy_manifest:
+    description: "Deploy using package.xml manifest (Step 3b — official group deployment record)"
+    command: "sf project deploy start --manifest work-item/[project-slug]/05-build/package.xml --test-level NoTestRun"
+    note: >
+      Run after all individual artifacts in the group have deployed successfully (Step 3).
+      Replace [project-slug] with the actual project slug.
+      No wildcards (*) are permitted in the manifest — all members must be named explicitly.
+  deploy_full_deprecated:
+    description: "DEPRECATED — deploy entire force-app directory (exception only, Phase 9)"
+    command: "sf project deploy start --source-dir force-app --test-level RunLocalTests"
+    note: "Release the Phase 5 manifest instead. Using this requires written sign-off recording why the manifest was insufficient."
+  deploy_dependency_layers:
+    description: "Reference order for incremental deployment — deploy lower layers first"
+    layers:
+      - order: 1
+        name: "Schema"
+        metadata_types:
+          [
+            "objects",
+            "customMetadata",
+            "globalValueSets",
+            "customPermissions",
+            "standardValueSets"
+          ]
+      - order: 2
+        name: "Apex"
+        metadata_types: ["classes", "triggers"]
+        note: "Deploy utility/helper classes before service/handler classes; triggers last"
+      - order: 3
+        name: "UI"
+        metadata_types: ["lwc", "aura", "pages"]
+      - order: 4
+        name: "Automation"
+        metadata_types: ["flows", "workflows", "approvalProcesses"]
+      - order: 5
+        name: "Configuration"
+        metadata_types:
+          [
+            "permissionsets",
+            "profiles",
+            "layouts",
+            "tabs",
+            "applications",
+            "labels",
+            "staticresources",
+            "contentassets"
+          ]
+        note: "Profiles only for profile-only settings (login hours, login IP ranges / network access, default application, login flows, session settings); use permission sets for all access grants"
+  test:
+    description: "Run all local tests with coverage"
+    command_human: "sf apex run test --test-level RunLocalTests --code-coverage --result-format human"
+    command_json: "sf apex run test --test-level RunLocalTests --code-coverage --result-format json"
+
+guidelines:
+  - file: "rules.md"
+    description: "Master Salesforce rules (always loaded for SF)"
+    phases: [03, 04, 05, 06, 07, 09]
+  - file: "deploy-protocol.md"
+    description: "Canonical deploy commands, evidence, and release policy"
+    phases: [03, 04, 05, 06, 09]
+  - file: "NamingConventions.md"
+    description: "Naming standards for all Salesforce artifacts"
+    phases: [03, 04, 05, 06]
+  - file: "ProjectPlanning.md"
+    description: "Project planning and estimation guidance"
+    phases: [03, 04]
+  - file: "ApexGuidelines.md"
+    description: "Apex construction rules"
+    phases: [03, 04, 05, 06, 07]
+  - file: "LWCGuidelines.md"
+    description: "LWC construction rules"
+    phases: [03, 04, 05, 06, 07]
+  - file: "FlowGuidelines.md"
+    description: "Flow design and construction rules"
+    phases: [03, 04, 05, 06, 07]
+  - file: "DeploymentGuidelines.md"
+    description: "Deployment, source control, and CI guidance"
+    phases: [03, 04, 05, 06, 09]
+  - file: "PackageXMLGuidelines.md"
+    description: "Manifest format and naming rules"
+    phases: [03, 04, 05, 06, 09]
+  - file: "ApexTestGuidelines.md"
+    description: "Apex test standards"
+    phases: [05, 07]
+  - file: "DataFactoryGuidelines.md"
+    description: "Test data factory standards"
+    phases: [05, 07]
+  - file: "verification-overlay.md"
+    description: "Salesforce deployment triage + SFG3.3 cross-checks"
+    phases: [03, 05, 06]
+  - file: "quality-gates.md"
+    description: "Blocking Salesforce quality gates (SFG*)"
+    phases: [02, 03, 04, 05, 06, 07, 09]
+
+artifacts:
+  build_log: "work-item/[project-slug]/05-build/build-log.md"
+  package_xml: "work-item/[project-slug]/05-build/package.xml"
+  verification_report: "work-item/[project-slug]/06-verification/verification-report.md"
+  test_report: "work-item/[project-slug]/07-testing/test-report.md"
+  release_notes: "work-item/[project-slug]/09-release/release-notes.md"
+  retrospective: "work-item/[project-slug]/10-archive/retrospective.md"
+
+references:
+  official_docs: "https://developer.salesforce.com/docs"
+  deploy_protocol: "technology-rules/salesforce/deploy-protocol.md"

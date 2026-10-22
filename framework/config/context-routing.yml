@@ -1,0 +1,206 @@
+# Context Routing Configuration
+# Defines the minimum files an agent should load for each framework phase.
+# Agents may load optional files only when the current phase, risk, or user request requires them.
+
+version: "1.0"
+
+always_required:
+  - AGENTS.md
+  - framework/rules/core.md
+  - framework/config/phase-approval.yml
+  - framework/config/phase-skips.yml
+
+technology_required_phases: [3, 4, 5, 6, 7, 9]  # Phase 2 = gates-only: technology-rules/[technology]/quality-gates.md MAY load for SFG2.*/DPPG2.* without implementation guidelines
+
+placeholder_resolution:
+  technology:
+    sources:
+      - work-item/[project-slug]/README.md field technology or tech_stack
+      - work-item/[project-slug]/tech-config.yml field technology
+    rule: "If technology cannot be resolved or has no matching technology-rules directory, stop and ask the user before continuing."
+  project_rules:
+    source: project-rules/project-config.yml
+    rule: "If project-rules/project-config.yml exists, the project rules overlay is active for every work-item in this repo. If it does not exist, the overlay is inactive and the effective context is unchanged (technology + framework only). If it exists but does not validate, stop with [BLOCKER] before loading phase context."
+
+# ---------------------------------------------------------------------------
+# Effective context resolution (v1.6 — project rules overlay)
+# ---------------------------------------------------------------------------
+# For each phase, the agent resolves ONE effective set (no file loaded twice):
+#   1. Base set = framework + technology-rules/[technology] for the phase.
+#   2. Project layer (only if project-rules/project-config.yml exists):
+#        - guidelines[].phases includes the phase -> candidate.
+#        - candidate with `replaces: <base path>` -> the base file is EXCLUDED
+#          and only the project file is loaded.
+#        - candidate without `replaces` (or with `extends: true`) -> additive.
+#   3. `quality-gates.md` is NEVER replaceable: base technology/framework gates
+#      always load; project `PRG<phase>.<n>` gates are added on top.
+# Fail-closed: every file in the effective set MUST exist and validate. If any
+# file is missing/invalid, the phase MUST NOT start ([BLOCKER]). No best-effort.
+# Manifest: `validate-project-rules.sh --phase N --manifest <path>` emits the
+# active project guideline paths for that phase.
+# Schema of project-rules/project-config.yml: see
+# framework/templates/project-rules/project-config.yml.
+effective_context:
+  project_rules_source: "project-rules/project-config.yml"
+  absent_behavior: "overlay inactive; effective set = technology + framework only"
+  replace_semantics: "project file wins and the replaced base file is not loaded"
+  extend_semantics: "additive (default when neither `replaces` nor `extends` is set)"
+  gates_policy: "quality-gates.md never replaceable; base gates always load; project PRG* gates additive"
+  fail_closed: true
+  precedence: ["project (add/tighten only)", "technology", "framework", "agent defaults"]
+
+phases:
+  1:
+    name: "Proposal / Intake"
+    workflow: framework/workflows/phase-01-proposal.md
+    required:
+      - framework/skills/proposal-writing/skill.md
+      - framework/templates/active.yml
+      - framework/templates/project-readme.md
+      - framework/templates/proposal.md
+      - framework/templates/cr-intake.md
+      - framework/templates/bug-report.md
+    conditional:
+      # load only if sizing gate fires OR active.yml type: epic OR explicit request
+      - framework/skills/epic-decomposition/skill.md
+      - framework/templates/epic-map.yml
+    optional:
+      - framework/rules/quality-gates.md
+
+  2:
+    name: "Specifications"
+    workflow: framework/workflows/phase-02-specs.md
+    required:
+      - framework/skills/specs-writing/skill.md
+      - framework/templates/specs.md
+      - framework/rules/quality-gates.md
+    conditional:
+      # load only if sizing gate fires OR active.yml type: epic OR explicit request
+      - framework/skills/epic-decomposition/skill.md
+    optional:
+      - framework/templates/traceability-matrix.md
+      - technology-rules/[technology]/rules.md
+      - technology-rules/[technology]/quality-gates.md  # gates-only (no implementation guidelines in Phase 2)
+
+  3:
+    name: "Design"
+    workflow: framework/workflows/phase-03-design.md
+    required:
+      - framework/rules/phase-transitions.md
+      - framework/skills/architecture-design/skill.md
+      - framework/templates/design.md
+      - framework/templates/adr.md
+      - framework/templates/adr-registry.md
+      - framework/rules/quality-gates.md
+      - technology-rules/[technology]/rules.md
+      - technology-rules/[technology]/quality-gates.md
+      # Technology guideline files are NOT hardcoded here.
+      # Load additional guidelines from technology-rules/[technology]/tech-config.yml:guidelines[]
+      # where `phases` contains 03.
+    optional:
+      - technology-rules/[technology]/quality-gates.md
+      - framework/skills/project-documentation/skill.md
+
+  4:
+    name: "Atomic Tasks"
+    workflow: framework/workflows/phase-04-tasks.md
+    required:
+      - framework/rules/phase-transitions.md
+      - framework/skills/task-decomposition/skill.md
+      - framework/templates/task-list.md
+      - framework/rules/quality-gates.md
+      - technology-rules/[technology]/rules.md
+      - technology-rules/[technology]/quality-gates.md
+      # Technology guideline files are NOT hardcoded here.
+      # Load additional guidelines from technology-rules/[technology]/tech-config.yml:guidelines[]
+      # where `phases` contains 04.
+    optional:
+      - framework/templates/traceability-matrix.md
+      - technology-rules/[technology]/quality-gates.md
+      - framework/skills/project-documentation/skill.md
+
+  5:
+    name: "Construction / Build"
+    workflow: framework/workflows/phase-05-build.md
+    required:
+      - framework/rules/phase-transitions.md
+      - framework/rules/evidence.md
+      - framework/skills/code-review/skill.md
+      - framework/templates/build-log.md
+      - framework/rules/quality-gates.md
+      - technology-rules/[technology]/rules.md
+    optional:
+      - technology-rules/[technology]/quality-gates.md
+      - framework/skills/project-documentation/skill.md
+
+  6:
+    name: "Verification"
+    workflow: framework/workflows/phase-06-verification.md
+    required:
+      - framework/rules/phase-transitions.md
+      - framework/rules/evidence.md
+      - framework/skills/verification/skill.md
+      - framework/templates/verification-report.md
+      - framework/rules/quality-gates.md
+      - technology-rules/[technology]/rules.md
+    optional:
+      - technology-rules/[technology]/quality-gates.md
+      - framework/templates/evidence-tracker.md
+      - framework/skills/project-documentation/skill.md
+
+  7:
+    name: "Testing"
+    workflow: framework/workflows/phase-07-testing.md
+    required:
+      - framework/rules/phase-transitions.md
+      - framework/rules/evidence.md
+      - framework/skills/test-generation/skill.md
+      - framework/templates/test-report.md
+      - framework/rules/quality-gates.md
+      - technology-rules/[technology]/rules.md
+    optional:
+      - technology-rules/[technology]/quality-gates.md
+      - framework/skills/project-documentation/skill.md
+
+  8:
+    name: "Commit & Pull Request"
+    workflow: framework/workflows/phase-08-commit-pr.md
+    required:
+      - framework/rules/phase-transitions.md
+      - framework/skills/git-operations/skill.md
+      - framework/skills/code-review/skill.md
+      - framework/rules/quality-gates.md
+    optional:
+      - framework/templates/release-notes.md
+
+  9:
+    name: "Release"
+    workflow: framework/workflows/phase-09-release.md
+    required:
+      - framework/rules/phase-transitions.md
+      - framework/rules/evidence.md
+      - framework/skills/release-management/skill.md
+      - framework/templates/release-notes.md
+      - framework/rules/quality-gates.md
+      - technology-rules/[technology]/rules.md
+    optional:
+      - technology-rules/[technology]/quality-gates.md
+
+  10:
+    name: "Archive"
+    workflow: framework/workflows/phase-10-archive.md
+    required:
+      - framework/rules/phase-transitions.md
+      - framework/skills/retrospective/skill.md
+      - framework/skills/project-archiving/skill.md
+      - framework/templates/retrospective.md
+      - framework/rules/quality-gates.md
+    optional:
+      - framework/rules/evidence.md
+
+# Epic children (v1.4): in every phase, a child (active.yml type: feature with
+# parent_epic set) additionally loads work-item/[parent_epic]/epic-map.yml plus
+# the specs.md/design.md of its depends_on siblings (read-only; a child never
+# edits another work-item's artifacts).
+# Epic parents (v1.5 contract-first): in Phase 3 an epic parent additionally loads framework/skills/architecture-design/skill.md + framework/templates/design.md to produce its shared design.md.
+# Children (v1.5): in Phases 2–5 additionally load work-item/[parent_epic]/03-design/design.md read-only when it exists.

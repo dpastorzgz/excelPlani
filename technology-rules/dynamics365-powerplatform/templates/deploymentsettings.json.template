@@ -1,0 +1,26 @@
+// deploymentsettings.json — template for managed solution imports.
+// Copy to your pipeline/release folder and fill per environment (dev/int/uat/production).
+// Resolves environment variables + connection references at import time (DPPG5.12/DPPG9.3).
+{
+  "EnvironmentVariables": [
+    {
+      "SchemaName": "acme_ApiBaseUrl",
+      "Value": "https://api-int.example.com"
+    },
+    {
+      "SchemaName": "acme_FeatureFlag",
+      "Value": "true"
+    }
+  ],
+  "ConnectionReferences": [
+    {
+      "LogicalName": "acme_shared_sharepoint",
+      "ConnectionId": "00000000-0000-0000-0000-000000000000",
+      "ConnectorId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline"
+    }
+  ],
+  "Notes": [
+    "Production values come from pipeline/administrator configuration, never developer-owned connections.",
+    "Secret values: reference Azure Key Vault from the pipeline; do not store secrets in this file or source control."
+  ]
+}

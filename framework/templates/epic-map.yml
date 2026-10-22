@@ -1,0 +1,20 @@
+# epic-map.yml — Epic children, dependencies and waves (template v1.5)
+# Copy to: work-item/[epic-slug]/epic-map.yml
+# Single source of truth for the epic breakdown. Child active.yml files
+# mirror their own row; on conflict, the child's active.yml wins and this
+# file must be updated to match.
+epic: "{{epic_slug}}"
+strategy: domain  # domain | risk | tech-layer
+wave_policy: strict  # strict | relaxed; relaxed requires justification: "..." + date: YYYY-MM-DD recorded below
+children:
+  - slug: "{{child_slug_01}}"
+    wave: 0
+    depends_on: []
+    scope: "{{scope_wave_0}}"
+    status: planned  # planned | active | blocked | done
+  - slug: "{{child_slug_02}}"
+    wave: 1
+    depends_on: ["{{child_slug_01}}"]
+    scope: "{{scope_wave_1}}"
+    status: planned
+# Freshness rule: every child active.yml phase/status change MUST update its row here in the same session; on conflict the child's active.yml wins.

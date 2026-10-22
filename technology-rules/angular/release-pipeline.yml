@@ -1,0 +1,140 @@
+# Angular Release Pipeline Configuration
+#
+# Purpose:
+# - Define the ordered environment pipeline (dev → acp → pre → production)
+# - Define the verification and validation strategy per hop
+# - Define what evidence must be recorded in Phase 09 release notes
+#
+# This file is referenced by:
+# - technology-rules/angular/rules.md (Phase 09 — Release)
+# - technology-rules/angular/DeploymentGuidelines.md
+#
+# Notes:
+# - The release artifact is the CI-built dist/ output for the production
+#   configuration (build id = git commit SHA); it is promoted, never rebuilt.
+# - Environment names are frozen: dev, acp, pre, production.
+# - If the pipeline is project-specific, duplicate this file under the project
+#   folder and reference it from the project context.
+
+version: 1
+
+verification:
+  static_analysis:
+    required: true
+    tools:
+      - name: eslint
+        description: TypeScript/HTML static analysis via angular-eslint (flat config)
+        gate_command: "npm run lint"
+        fail_on_error: true
+      - name: prettier
+        description: Formatting check
+        gate_command: "npm run format:check"
+        clean_required: true
+      - name: build
+        description: Production-configuration build (bundle budgets in angular.json respected)
+        gate_command: "npm run build"
+        fail_on_error: true
+      - name: tests
+        description: Unit test suite (Vitest 4 + jsdom)
+        gate_command: "npm test"
+        fail_on_failure: true
+    coverage:
+      gate_command: "npm test -- --coverage"
+      threshold_percent: 75
+      critical_data_access_state_threshold_percent: 85
+    policy: >
+      Phase 06 cannot be approved unless ESLint reports 0 errors, Prettier is
+      clean, the production build completes with 0 errors, the full test suite
+      passes with 0 failures, and coverage meets the thresholds (75% global;
+      85% for critical data-access and state files). All checks are blocking;
+      a green build alone does not satisfy this gate.
+
+pipeline:
+  # Ordered environments (frozen names).
+  target_policy: >
+    Builds run in CI only; no release artifact is built or rebuilt by hand.
+    Each hop validates the artifact required for the target environment's
+    configuration (development for dev/acp; production for pre/production) and
+    promotes the same artifact — never a rebuild.
+  release_artifact: >
+    CI-built dist/ artifact for the production configuration (build id = git
+    commit SHA), immutable; validated in pre and promoted to production unchanged.
+  environments:
+    - env: dev
+      description: Development environment (MSW mocks allowed while the backend is absent)
+    - env: acp
+      description: Acceptance environment (development-configuration build; smoke + QA sign-off)
+    - env: pre
+      description: Preproduction (production-configuration build; full smoke desktop+mobile + a11y check)
+    - env: production
+      description: Production (promoted artifact from pre; release manager approval required)
+
+  # How to select the "next environment" for a release.
+  # Implementation depends on your process; this is a policy definition.
+  next_environment_rule:
+    type: manual_approval
+    details: >
+      The next environment is chosen by release manager approval, based on the
+      current pipeline position and the CI build id under promotion.
+
+hops:
+  - from: dev
+    to: acp
+    validate_before_deploy: true
+    checks:
+      - build development configuration (npm run build:dev)
+      - lint (npm run lint — 0 errors)
+      - unit tests (npm test — 0 failures)
+    approval: none
+    mode: auto
+  - from: acp
+    to: pre
+    validate_before_deploy: true
+    checks:
+      - build production configuration (npm run build:pre)
+      - full test suite (npm test — 0 failures)
+      - smoke checklist (desktop + mobile)
+      - accessibility check on main flows (ANG6.3)
+    approval: qa_signoff
+    approval_description: QA sign-off required before promotion to pre.
+  - from: pre
+    to: production
+    validate_before_deploy: true
+    checks:
+      - artifact identity verified: same build id validated in pre; no rebuild
+    release_manager_approval_required: true
+    rollback_plan_required: true
+    post_deploy_smoke_required: true
+
+rollback:
+  policy: >
+    Rollback is an artifact re-deploy: restore the previous immutable build
+    (previous build id) to the target environment. Never rebuild from an older
+    commit; the previous artifact is redeployed as-is.
+  previous_artifact_source: >
+    CI artifact store (retain the last N = 5 builds) or hosting-platform
+    versioning/instant rollback.
+  data_migration: >
+    A frontend release owns no data migration; rollback is a pure artifact
+    switch. When a release depends on API or storage changes, coordinate the
+    frontend rollback with the backend/data rollback.
+  evidence: >
+    Record the rollback reference (previous build id) in the release notes
+    before production promotion.
+
+evidence_requirements:
+  # Evidence that must be referenced in work-item/[project-slug]/09-release/release-notes.md
+  required_links:
+    - work-item/[project-slug]/05-build/build-log.md
+    - work-item/[project-slug]/06-verification/verification-report.md
+    - work-item/[project-slug]/07-testing/test-report.md
+  required_fields:
+    - target_environment
+    - build_id_or_commit
+    - artifact_reference
+    - validation_result
+    - smoke_result
+    - rollback_reference
+  additional_notes:
+    - Record the build configuration used per environment (development for dev/acp; production for pre/production).
+    - Record the smoke checklist result per hop as defined in DeploymentGuidelines.md.

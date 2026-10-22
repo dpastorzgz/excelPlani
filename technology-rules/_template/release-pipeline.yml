@@ -1,0 +1,60 @@
+# {{Technology Name}} Release Pipeline Configuration (Template)
+
+version: 1
+
+verification:
+  static_analysis:
+    required: true
+    tools:
+      - name: "{{lint_tool}}"
+        description: "{{what it checks}}"
+        fail_on_high: true
+    policy: >
+      Phase 06 cannot be approved unless required validation tools have run
+      and no blocking violations are present.
+
+pipeline:
+  # Ordered environments. Use aliases that exist in your team / CI.
+  # The exact environment type (scratch/sandbox/staging/prod) is per-project
+  # configuration, never hardcoded in commands.
+  target_org_policy: "Phase 5 uses the configured default; Phase 7/9/CI pass the target explicitly."
+  release_artifact: "work-item/[project-slug]/05-build/{{artifact}} (built in Phase 5, released in Phase 9 — never rebuilt from source dirs)"
+  environments:
+    - env: dev
+      description: Development / integration environment
+    - env: uat
+      description: User acceptance environment
+    - env: production
+      description: Production
+
+  next_environment_rule:
+    type: manual_approval
+    details: >
+      The next environment is chosen by release manager approval based on
+      current pipeline position, target branch/tag, and readiness evidence.
+
+validation_strategy:
+  hops:
+    - from: dev
+      to: uat
+      validate_before_deploy: true
+      smoke_test_required: true
+    - from: uat
+      to: production
+      validate_before_deploy: true
+      smoke_test_required: true
+      release_manager_approval_required: true
+      rollback_plan_required: true
+
+evidence_requirements:
+  required_links:
+    - work-item/[project-slug]/05-build/build-log.md
+    - work-item/[project-slug]/06-verification/verification-report.md
+    - work-item/[project-slug]/07-testing/test-report.md
+  required_fields:
+    - target_environment
+    - release_artifact_path_or_version
+    - validation_result_or_job_id
+    - deploy_result_or_job_id
+    - smoke_test_result
+    - rollback_strategy

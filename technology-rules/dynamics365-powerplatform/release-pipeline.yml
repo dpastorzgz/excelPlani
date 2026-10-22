@@ -1,0 +1,92 @@
+# Dynamics 365 / Power Platform Release Pipeline Configuration
+#
+# Purpose:
+# - Define ordered environments
+# - Define validation strategy per hop
+# - Define evidence required in Phase 09 release notes
+
+version: 1
+
+verification:
+  static_analysis:
+    required: true
+    tools:
+      - name: solution-checker
+        description: Microsoft Power Platform Solution Checker
+        fail_on_critical: true
+        fail_on_high: true
+      - name: dotnet
+        description: .NET build/test for plugins and custom APIs when present
+        required_when: "plugins_or_custom_apis_present"
+      - name: npm
+        description: npm build/lint/test for PCF controls when present
+        required_when: "pcf_present"
+    policy: >
+      Phase 06 cannot be approved unless required validation tools have run
+      and no blocking violations are present.
+
+pipeline:
+  environments:
+    - env: dev
+      description: Development environment for unmanaged solution authoring
+      solution_type: unmanaged
+    - env: int
+      description: Shared integration environment for managed solution import
+      solution_type: managed
+    - env: uat
+      description: User acceptance environment for managed solution validation
+      solution_type: managed
+    - env: production
+      description: Production environment
+      solution_type: managed
+
+  next_environment_rule:
+    type: manual_approval
+    details: >
+      The next environment is chosen by release manager approval based on
+      current pipeline position, target branch/tag, and readiness evidence.
+
+validation_strategy:
+  hops:
+    - from: dev
+      to: int
+      export_unmanaged: true
+      unpack_source: true
+      run_solution_checker: true
+      import_managed: true
+      smoke_test_required: true
+    - from: int
+      to: uat
+      run_solution_checker: true
+      import_managed: true
+      smoke_test_required: true
+      persona_test_required: true
+    - from: uat
+      to: production
+      run_solution_checker: true
+      import_managed: true
+      smoke_test_required: true
+      persona_test_required: true
+      release_manager_approval_required: true
+      rollback_plan_required: true
+
+evidence_requirements:
+  required_links:
+    - work-item/[project-slug]/05-build/build-log.md
+    - work-item/[project-slug]/05-build/solution-inventory.md
+    - work-item/[project-slug]/05-build/checker-results/
+    - work-item/[project-slug]/06-verification/verification-report.md
+    - work-item/[project-slug]/07-testing/test-report.md
+  required_fields:
+    - target_environment
+    - solution_name
+    - solution_version
+    - managed_artifact_path
+    - solution_checker_result
+    - import_result_or_job_id
+    - smoke_test_result
+    - rollback_strategy
+  additional_notes:
+    - Record environment variable and connection reference handling.
+    - Record DLP or service connection confirmations.
+    - Record service account or service principal used by automation.

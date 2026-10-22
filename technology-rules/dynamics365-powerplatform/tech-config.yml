@@ -1,0 +1,129 @@
+# Technology configuration (Dynamics 365 / Power Platform)
+# This file is intended to be referenced by framework rules/workflows.
+
+technology: "dynamics365-powerplatform"
+display_name: "Dynamics 365 / Power Platform"
+version: "1.0.0"
+
+language: "power-platform"
+runtime_version: "Dataverse online"
+secondary_languages:
+  - "csharp"
+  - "typescript"
+  - "javascript"
+  - "power-fx"
+  - "yaml"
+
+coverage:
+  solution_checker:
+    fail_on_critical: true
+    fail_on_high: true
+  plugin_tests:
+    required_when_plugins_present: true
+  pcf_tests:
+    required_when_pcf_present: true
+
+commands:
+  auth:
+    description: "Authenticate to a Power Platform environment"
+    command: "pac auth create --url [environment-url]"
+  solution_export_unmanaged:
+    description: "Export unmanaged development solution"
+    command: "pac solution export --name [SolutionName] --path solutions/[SolutionName]/[SolutionName].zip --managed false"
+  solution_unpack:
+    description: "Unpack unmanaged solution into source control"
+    command: "pac solution unpack --zipfile solutions/[SolutionName]/[SolutionName].zip --folder solutions/[SolutionName]/src --packagetype Unmanaged"
+  solution_checker:
+    description: "Run Solution Checker and store output as build evidence"
+    command: "pac solution checker --path solutions/[SolutionName]/[SolutionName].zip --outputDirectory work-item/[project-slug]/05-build/checker-results"
+    blocking_threshold: "critical_or_high"
+  solution_export_managed:
+    description: "Export managed solution artifact for downstream environments"
+    command: "pac solution export --name [SolutionName] --path solutions/[SolutionName]/[SolutionName]_managed.zip --managed true"
+  solution_pack_managed:
+    description: "Pack source folder as managed solution artifact"
+    command: "pac solution pack --zipfile solutions/[SolutionName]/[SolutionName]_managed.zip --folder solutions/[SolutionName]/src --packagetype Managed"
+  solution_import_managed:
+    description: "Import managed solution into target environment"
+    command: "pac solution import --path solutions/[SolutionName]/[SolutionName]_managed.zip"
+  plugin_build:
+    description: "Build .NET plugin/custom API code when present"
+    command: "dotnet build plugins/[PluginProject]/[PluginProject].csproj --configuration Release"
+  plugin_test:
+    description: "Run .NET tests for plugin/custom API projects when present"
+    command: "dotnet test plugins/[PluginProject].Tests/[PluginProject].Tests.csproj --configuration Release"
+  pcf_build:
+    description: "Build PCF control when present"
+    command: "npm run build --prefix pcf/[ControlName]"
+  pcf_test:
+    description: "Run PCF tests when present"
+    command: "npm test --prefix pcf/[ControlName]"
+
+artifacts:
+  build_log: "work-item/[project-slug]/05-build/build-log.md"
+  solution_inventory: "work-item/[project-slug]/05-build/solution-inventory.md"
+  checker_results: "work-item/[project-slug]/05-build/checker-results/"
+  verification_report: "work-item/[project-slug]/06-verification/verification-report.md"
+  test_report: "work-item/[project-slug]/07-testing/test-report.md"
+  release_notes: "work-item/[project-slug]/09-release/release-notes.md"
+  retrospective: "work-item/[project-slug]/10-archive/retrospective.md"
+
+deployment:
+  tool: "pac"
+  ci_tool: "Microsoft Power Platform Build Tools for Azure DevOps"
+  source_format: "unpacked-solution"
+  development_solution_type: "unmanaged"
+  downstream_solution_type: "managed"
+  production_requires_approval: true
+  # `int` = shared integration/test environment alias in the default pipeline.
+  # Projects may alias it to `test`; always record the resolved environment URL + name.
+  environments:
+    - "dev"
+    - "int"
+    - "uat"
+    - "production"
+
+guidelines:
+  # NOTE (P4.2 gates-only): Phase 2 should load only quality-gates, but
+  # NamingConventions.md (phases include 01, 02) and SecurityGuidelines.md
+  # (phases include 02) currently load implementation docs in Phase 02.
+  # Comment-only flag — do NOT restructure phases here without operator approval.
+  - file: "NamingConventions.md"
+    description: "Naming standards for all Dataverse and Power Platform artifacts"
+    phases: [01, 02, 03, 04, 05, 06, 07, 08, 09]
+  - file: "DataverseGuidelines.md"
+    description: "Dataverse schema, data, and API rules"
+    phases: [03, 04, 05, 06, 07]
+  - file: "ModelDrivenAppGuidelines.md"
+    description: "Model-driven app and Client API rules"
+    phases: [03, 04, 05, 06, 07]
+  - file: "CanvasAppGuidelines.md"
+    description: "Canvas app and Power Fx rules"
+    phases: [03, 04, 05, 06, 07]
+  - file: "PowerAutomateGuidelines.md"
+    description: "Cloud flow design, error handling, and evidence rules"
+    phases: [03, 04, 05, 06, 07]
+  - file: "PluginCustomApiGuidelines.md"
+    description: "Dataverse plugin and custom API rules"
+    phases: [03, 04, 05, 06, 07]
+  - file: "PCFGuidelines.md"
+    description: "Power Apps component framework rules"
+    phases: [03, 04, 05, 06, 07]
+  - file: "SecurityGuidelines.md"
+    description: "Security roles, DLP, secrets, and persona validation"
+    phases: [02, 03, 04, 05, 06, 07, 08, 09]
+  - file: "ALMDeploymentGuidelines.md"
+    description: "Solution, pac, Azure DevOps, deployment, and release rules"
+    phases: [03, 04, 05, 06, 08, 09]
+  - file: "verification-overlay.md"
+    description: "Checker/import triage + Phase 6 verification overlay"
+    phases: [03, 05, 06]
+
+references:
+  implementation_guide: "https://learn.microsoft.com/en-us/dynamics365/guidance/implementation-guide/introduction"
+  alm: "https://learn.microsoft.com/en-us/power-platform/alm/"
+  alm_basics: "https://learn.microsoft.com/en-us/power-platform/alm/basics-alm"
+  build_tools: "https://learn.microsoft.com/en-us/power-platform/alm/devops-build-tools"
+  solution_checker: "https://learn.microsoft.com/en-us/power-apps/maker/data-platform/use-powerapps-checker"
+  well_architected: "https://learn.microsoft.com/en-us/power-platform/well-architected/"
+  dataverse_best_practices: "https://learn.microsoft.com/en-us/power-apps/developer/data-platform/best-practices/"

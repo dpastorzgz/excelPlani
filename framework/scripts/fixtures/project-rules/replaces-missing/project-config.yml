@@ -1,0 +1,6 @@
+project: "fixture-replaces-missing"
+guidelines:
+  - file: "rules.md"
+    description: "Replaces a nonexistent technology guideline"
+    phases: [05]
+    replaces: "technology-rules/salesforce/NoSuchGuideline.md"

@@ -1,0 +1,146 @@
+# Phase Approval Configuration
+# ---------------------------------------------------------------
+# Controls whether each phase transition requires explicit human
+# approval before the agent proceeds to the next phase.
+#
+# approval_mode values:
+#   human     → Agent stops, presents summary + quality gate result,
+#               and waits for explicit user confirmation.
+#   automatic → Agent proceeds immediately once the phase criteria
+#               are met, without waiting for user input.
+#
+# rejection_action values:
+#   return_to_current → Stay in the current phase, address feedback,
+#                       and re-present for approval.
+#   return_to_phase_N → Jump back to a specific phase (e.g. phase 2)
+#                       when rejection means the upstream artifact is invalid.
+#
+# notify_on_auto values:
+#   true  → Even in automatic mode, post a brief completion notice
+#           so the user stays informed.
+#   false → Silent progression (no message posted).
+#
+# notes: Optional free-text description of why this transition has
+#        a particular configuration (useful for non-default modes).
+#
+# Default approval_mode : human
+# Default rejection_action: return_to_current
+# Default notify_on_auto : true
+# ---------------------------------------------------------------
+
+transitions:
+  phase_1_to_2:
+    from: "Phase 1 — Proposal"
+    to: "Phase 2 — Specs"
+    approval_mode: human
+    rejection_action: return_to_current
+    notify_on_auto: true
+    notes: >
+      The proposal is the first user-facing artifact. Human review
+      ensures the project scope is correctly understood before
+      detailed requirements work begins.
+
+  phase_2_to_3:
+    from: "Phase 2 — Specs"
+    to: "Phase 3 — Design"
+    approval_mode: human
+    rejection_action: return_to_current
+    notify_on_auto: true
+    notes: >
+      Specs are the contractual baseline for all downstream phases.
+      Any ambiguity here compounds in design and construction.
+
+  phase_3_to_4:
+    from: "Phase 3 — Design"
+    to: "Phase 4 — Atomic Tasks"
+    approval_mode: human
+    rejection_action: return_to_current
+    notify_on_auto: true
+    notes: >
+      The design determines the task breakdown. If the design is
+      rejected, task decomposition cannot begin.
+
+  phase_4_to_5:
+    from: "Phase 4 — Atomic Tasks"
+    to: "Phase 5 — Construction"
+    approval_mode: human
+    rejection_action: return_to_current
+    notify_on_auto: true
+    notes: >
+      Task list approval is the last gate before code is written.
+      Ensures scope and effort estimates are aligned with the user.
+
+  phase_5_to_6:
+    from: "Phase 5 — Construction"
+    to: "Phase 6 — Verification"
+    approval_mode: human
+    rejection_action: return_to_current
+    notify_on_auto: true
+    notes: >
+      Build completion requires human sign-off that all tasks in
+      the task list have been addressed before independent review.
+
+  phase_6_to_7:
+    from: "Phase 6 — Verification"
+    to: "Phase 7 — Testing"
+    approval_mode: human
+    rejection_action: return_to_phase_5
+    notify_on_auto: true
+    notes: >
+      If verification reveals deviations from specs or design,
+      work returns to Phase 5 (Construction) to fix them.
+      A clean verification report is required before testing.
+
+  phase_7_to_8:
+    from: "Phase 7 — Testing"
+    to: "Phase 8 — Commit & PR"
+    approval_mode: human
+    rejection_action: return_to_phase_5
+    notify_on_auto: true
+    notes: >
+      Test failures must be resolved in Construction (Phase 5)
+      before the code can be committed. No failing tests allowed
+      in the commit.
+
+  phase_8_to_9:
+    from: "Phase 8 — Commit & PR"
+    to: "Phase 9 — Release"
+    approval_mode: human
+    rejection_action: return_to_current
+    notify_on_auto: true
+    notes: >
+      The PR must be reviewed and merged before a release is
+      prepared. Human approval confirms the merge is done.
+
+  phase_9_to_10:
+    from: "Phase 9 — Release"
+    to: "Phase 10 — Archive"
+    approval_mode: human
+    rejection_action: return_to_current
+    notify_on_auto: true
+    notes: >
+      Archiving is irreversible in practice. Human confirmation
+      ensures the release was successful and the project is truly
+      complete before closing it.
+
+  phase_10_closure:
+    event: "Phase 10 — Archive Closure (Final)"
+    approval_mode: human
+    hard_gate: true
+    rejection_action: return_to_current
+    notify_on_auto: true
+    notes: >
+      Phase 10 is NOT complete and status MUST NOT be set to 'closed'
+      until ALL three steps are physically confirmed:
+        1. work-item/[project-slug]/ directory no longer exists at its original path.
+        2. work-item/archive/[project-slug]/ directory exists with all artifacts.
+        3. A git commit recording the move has been created and its hash recorded
+           in work-item/archive/[project-slug]/10-archive/retrospective.md.
+      The agent must verify each step before presenting closure for human approval.
+      Logical status update alone is insufficient — physical relocation is mandatory.
+
+# Epic execution policy (v1.5, machine-readable; replaces former comment-only notes).
+epic_policy:
+  epic_scaffolding: automatic
+  epic_wave_closeout: per_child
+  wave_closeout_aggregated_requires_operator_authorization: true

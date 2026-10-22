@@ -1,0 +1,120 @@
+# Phase Skip Policy
+# Default: phases are not skippable unless this file explicitly allows it.
+
+version: "1.0"
+
+defaults:
+  allowed: false
+  requires_user_confirmation: true
+  requires_evidence: true
+
+phases:
+  1:
+    allowed: false
+    reason: "Every new-feature and change-request needs intake. Hotfix uses bug-report intake instead of proposal."
+  2:
+    allowed: false
+    reason: "Specs are mandatory for new-feature and change-request tracks."
+  3:
+    allowed: false
+    reason: "Design is mandatory by default. Only isolated change requests and hotfixes may skip design under track overrides."
+  4:
+    allowed: false
+    reason: "Task list is mandatory before build."
+  5:
+    allowed: false
+    reason: "Construction cannot be skipped."
+  6:
+    allowed: false
+    reason: "Verification is a hard mandatory phase."
+  7:
+    allowed: false
+    reason: "Testing is mandatory before commit and PR."
+  8:
+    allowed: false
+    reason: "Commit and PR governance is mandatory."
+  9:
+    allowed: false
+    reason: "Release must be documented or explicitly marked not applicable by user approval."
+  10:
+    allowed: false
+    reason: "Archive closure is mandatory for lifecycle completion."
+
+tracks:
+  new-feature:
+    entry_phase: 1
+    skip_overrides: {}
+
+  change-request:
+    entry_phase: 1
+    skip_overrides:
+      3:
+        allowed: true
+        requires_user_confirmation: true
+        requires_evidence: true
+        evidence: "cr-intake.md Section 6 states No architecture impact and the user confirms Phase 3 skip."
+
+  hotfix:
+    entry_phase: 4
+    # Intake = phase-01-proposal.md Steps — hotfix (mandatory entry to Phase 4).
+    skip_overrides:
+      1:
+        allowed: true
+        requires_user_confirmation: false
+        requires_evidence: true
+        evidence: "01-intake/bug-report.md exists and records hotfix track."
+      2:
+        allowed: true
+        requires_user_confirmation: false
+        requires_evidence: true
+        evidence: "01-intake/bug-report.md replaces Phase 2 for hotfix track."
+      3:
+        allowed: true
+        requires_user_confirmation: false
+        requires_evidence: true
+        evidence: "01-intake/bug-report.md states no separate design phase unless architectural impact is discovered."
+
+# Type-specific overrides are evaluated after the work-item track. For epic
+# parents, type: epic takes precedence for delegated phases while track remains
+# new-feature. Children (type: feature) use the new-feature track with no
+# additional overrides.
+# Epic parents MAY run Phase 3 contract-first (shared design.md + global ADRs, read-only for children); Phases 4–9 stay delegated.
+types:
+  epic:
+    entry_phase: 1
+    skip_overrides:
+      3:
+        allowed: true
+        requires_user_confirmation: true
+        requires_evidence: true
+        evidence: "epic-map.yml exists; shared contract-first design OPTIONAL (epic 03-design/design.md global + ADRs). Children load it read-only; deviation → child ADR + escalate to epic."
+      4:
+        allowed: true
+        requires_user_confirmation: true
+        requires_evidence: true
+        evidence: "epic-map.yml exists and delegates tasks to children."
+      5:
+        allowed: true
+        requires_user_confirmation: true
+        requires_evidence: true
+        evidence: "epic-map.yml exists and delegates construction to children."
+      6:
+        allowed: true
+        requires_user_confirmation: true
+        requires_evidence: true
+        evidence: "epic-map.yml exists and delegates verification to children."
+      7:
+        allowed: true
+        requires_user_confirmation: true
+        requires_evidence: true
+        evidence: "epic-map.yml exists and delegates testing to children."
+      8:
+        allowed: true
+        requires_user_confirmation: true
+        requires_evidence: true
+        evidence: "Commit/PR happens per child; epic records child PR links."
+      9:
+        allowed: true
+        requires_user_confirmation: true
+        requires_evidence: true
+        evidence: "Release happens per child wave; epic aggregates release notes."

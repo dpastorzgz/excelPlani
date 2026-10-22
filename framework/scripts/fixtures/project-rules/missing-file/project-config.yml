@@ -1,0 +1,5 @@
+project: "fixture-missing-file"
+guidelines:
+  - file: "does-not-exist.md"
+    description: "Referenced file does not exist"
+    phases: [05]
