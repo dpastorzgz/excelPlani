@@ -1,0 +1,13 @@
+Abrir Git bash y lanzar el siguiente comando, informar ruta del script y donde dejar el fichero de salida
+
+PC@DESKTOP-9LI75FJ UCRT64 ~/Downloads/Excel plani
+$ python ./diagramaGantt.py --salida ./ComercialData2.xlsm
+Archivo generado en: C:\Users\PC\Downloads\Excel plani\ComercialData2.xlsm
+
+
+Desde CMD usando la versión global de Python
+
+python "C:\Users\dpastopu\Documents\Codex\diagramaGanttBase.py" --salida "C:\Users\dpastopu\Documents\Codex\ComercialData2.xlsm"
+
+
+
