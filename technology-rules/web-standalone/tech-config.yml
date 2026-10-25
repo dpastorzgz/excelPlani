@@ -1,0 +1,52 @@
+technology: "web-standalone"
+display_name: "Standalone Web"
+version: "1.0.0"
+
+language: "javascript"
+runtime_version: "ES2022 in supported browsers; Node.js >=22 for build/test"
+secondary_languages:
+  - "html"
+  - "css"
+  - "powershell"
+
+testing:
+  coverage_threshold: 85
+  framework: "Vitest + Playwright"
+  run_command: "npm test"
+  coverage_command: "npm run test:coverage"
+  integration_tests_required: true
+  e2e_tests_required: true
+
+linting:
+  tool: "ESLint"
+  config_file: "eslint.config.js"
+  run_command: "npm run lint"
+  blocking: true
+
+deployment:
+  tool: "npm"
+  deploy_command: "npm run build"
+  validate_command: "npm run validate:release"
+  environments:
+    - "development"
+    - "local-qa"
+    - "release-directory"
+  production_requires_approval: true
+
+version_control:
+  branch_pattern: "codex/*"
+  merge_strategy: squash
+  min_approvals: 1
+
+guidelines:
+  - file: "NamingConventions.md"
+    description: "Naming standards for browser application artifacts"
+    phases: [03, 04, 05]
+  - file: "GeneralGuidelines.md"
+    description: "Local-first browser construction and verification standards"
+    phases: [03, 04, 05, 06, 07, 09]
+
+references:
+  official_docs: "https://developer.mozilla.org/"
+  style_guide: "https://developer.mozilla.org/docs/MDN/Writing_guidelines/Code_style_guide/JavaScript"
+  changelog: "technology-rules/web-standalone/README.md"

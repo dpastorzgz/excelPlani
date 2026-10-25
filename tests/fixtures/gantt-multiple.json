@@ -1,0 +1,19 @@
+{
+  "sheets": {
+    "Gantt Alpha": [
+      ["Fecha de estado", "2026-01-31"],
+      ["EDT", "Tarea", "Asignado", "Duracion", "Inicio", "Fin", "% completado", "Estado", "Comentarios", "Fin linea base", "Fecha cierre real", "Nivel de riesgo", "Bloqueada", "Hito"],
+      ["A1", "Alpha", "Alicia", 2, "2026-01-05", "2026-01-06", 0.5, "En progreso", "", "2026-01-06", null, "Bajo", "No", "No"]
+    ],
+    "Gantt Beta": [
+      ["Cabecera auxiliar"],
+      [],
+      ["WBS", "Task name", "Assignee", "Duration days", "Start date", "End date", "% complete", "Status", "Notes", "Baseline finish", "Actual finish", "Risk level", "Blocked", "Milestone"],
+      ["B1", "Beta", "Bruno", 1, "2026-02-02", "2026-02-02", 1, "Complete", "", "2026-02-02", "2026-02-02", "Low", "No", "Yes"]
+    ],
+    "Recursos": [
+      ["Nombre", "Alias"],
+      ["Alicia", "ALI"]
+    ]
+  }
+}

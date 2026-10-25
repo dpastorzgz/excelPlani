@@ -1,0 +1,53 @@
+version: 1
+
+verification:
+  static_analysis:
+    required: true
+    tools:
+      - name: "ESLint"
+        description: "JavaScript correctness and security/style rules"
+        fail_on_high: true
+      - name: "axe-core"
+        description: "Automated accessibility violations"
+        fail_on_high: true
+    policy: "Phase 6 requires zero ESLint errors and zero critical/serious axe violations."
+
+pipeline:
+  target_org_policy: "Static local-first artifact; validation targets are development, local QA and release directory."
+  release_artifact: "work-item/[project-slug]/05-build/dist-manifest.txt plus the recorded dist archive"
+  environments:
+    - env: development
+      description: "Source execution and automated unit tests"
+    - env: local-qa
+      description: "Built artifact served from a clean local directory"
+    - env: release-directory
+      description: "Approved archive copied to its distribution location"
+  next_environment_rule:
+    type: manual_approval
+    details: "User approval is required before copying the approved artifact to the release directory."
+
+validation_strategy:
+  hops:
+    - from: development
+      to: local-qa
+      validate_before_deploy: true
+      smoke_test_required: true
+    - from: local-qa
+      to: release-directory
+      validate_before_deploy: true
+      smoke_test_required: true
+      release_manager_approval_required: true
+      rollback_plan_required: true
+
+evidence_requirements:
+  required_links:
+    - work-item/[project-slug]/05-build/build-log.md
+    - work-item/[project-slug]/06-verification/verification-report.md
+    - work-item/[project-slug]/07-testing/test-report.md
+  required_fields:
+    - target_environment
+    - release_artifact_path_or_version
+    - validation_result_or_job_id
+    - deploy_result_or_job_id
+    - smoke_test_result
+    - rollback_strategy

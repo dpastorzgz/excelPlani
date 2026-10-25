@@ -74,3 +74,16 @@ work-item/
 force-app
 archive
 
+# Standalone project dashboard sources and build tooling
+!package.json
+!package-lock.json
+!eslint.config.js
+!vitest.config.js
+!playwright.config.js
+!scripts/
+!scripts/*.mjs
+dist/
+coverage/
+test-results/
+playwright-report/
+

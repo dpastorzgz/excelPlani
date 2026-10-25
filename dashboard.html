@@ -1,0 +1,216 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="light">
+    <meta name="theme-color" content="#102a43">
+    <title>Cuadro de mando del proyecto</title>
+    <link rel="stylesheet" href="dashboard-assets/dashboard.css">
+  </head>
+  <body>
+    <a class="skip-link" href="#main-content">Saltar al contenido principal</a>
+
+    <header class="app-header">
+      <div class="brand-block">
+        <span class="brand-mark" aria-hidden="true">AX</span>
+        <div>
+          <p class="eyebrow">Seguimiento del proyecto</p>
+          <h1>Cuadro de mando</h1>
+        </div>
+      </div>
+      <div class="header-actions" aria-label="Acciones de presentación">
+        <p class="source-status" id="source-status">
+          <span class="status-dot" aria-hidden="true"></span>
+          <span>Cargando el libro configurado</span>
+        </p>
+        <button class="button button-secondary" id="presentation-mode-button" type="button">
+          Vista de presentación
+        </button>
+        <button class="button button-primary" id="copy-dashboard-button" type="button">
+          Copiar imagen para PowerPoint
+        </button>
+      </div>
+    </header>
+
+    <div class="app-layout">
+      <aside class="filter-panel" aria-labelledby="filters-title">
+        <div class="panel-heading">
+          <p class="eyebrow">Ámbito del análisis</p>
+          <h2 id="filters-title">Filtros</h2>
+        </div>
+
+        <form id="dashboard-filters">
+          <div class="field-group">
+            <label for="project-sheet">Proyecto</label>
+            <select id="project-sheet" name="projectSheet" disabled>
+              <option>Cargando proyectos…</option>
+            </select>
+            <p class="field-help" id="project-sheet-help">Cada hoja Gantt se analiza por separado.</p>
+          </div>
+
+          <div class="field-group field-group-accent">
+            <label for="control-date">Fecha de control</label>
+            <input id="control-date" name="controlDate" type="date">
+            <p class="field-help">Actualiza completitud, retrasos y la línea temporal.</p>
+          </div>
+
+          <div class="field-group">
+            <label for="assignee-filter">Asignado</label>
+            <select id="assignee-filter" name="assignees" multiple size="5" aria-describedby="assignee-help">
+              <option value="">Cargando responsables…</option>
+            </select>
+            <p class="field-help" id="assignee-help">Use Ctrl para seleccionar varias personas.</p>
+            <button class="text-button filter-clear-button" id="clear-assignee-filter" type="button">
+              Mostrar todos los recursos
+            </button>
+          </div>
+
+          <fieldset class="date-range">
+            <legend>Intervalo planificado</legend>
+            <div class="date-range-grid">
+              <div class="field-group">
+                <label for="range-start">Desde</label>
+                <input id="range-start" name="rangeStart" type="date">
+              </div>
+              <div class="field-group">
+                <label for="range-end">Hasta</label>
+                <input id="range-end" name="rangeEnd" type="date">
+              </div>
+            </div>
+            <button class="text-button filter-clear-button" id="clear-date-range" type="button">
+              Limpiar intervalo de fechas
+            </button>
+          </fieldset>
+
+          <div class="field-group">
+            <label for="completion-filter">Completitud a fecha</label>
+            <select id="completion-filter" name="completionMode">
+              <option value="all">Todas las tareas</option>
+              <option value="completed">Completadas</option>
+              <option value="open">No completadas</option>
+              <option value="delayed">Retrasadas</option>
+            </select>
+          </div>
+
+          <button class="button button-reset" id="clear-filters-button" type="reset">Limpiar filtros</button>
+        </form>
+
+        <section class="source-card" aria-labelledby="source-title">
+          <h3 id="source-title">Fuente</h3>
+          <p id="source-file-name">Libro configurado en el código</p>
+          <button class="text-button" id="reload-workbook-button" type="button">Recargar libro</button>
+        </section>
+      </aside>
+
+      <main id="main-content" tabindex="-1">
+        <section class="overview-section" aria-labelledby="overview-title">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">Estado a fecha de control</p>
+              <h2 id="overview-title">Resumen del proyecto</h2>
+            </div>
+            <p class="context-line" id="active-filter-context">Sin filtros aplicados</p>
+          </div>
+
+          <div class="kpi-grid" aria-label="Indicadores del proyecto">
+            <article class="kpi-card kpi-total">
+              <p class="kpi-label">Tareas del proyecto</p>
+              <output class="kpi-value" id="kpi-total" aria-label="Tareas del proyecto">—</output>
+              <p class="kpi-note">Conjunto filtrado</p>
+            </article>
+            <article class="kpi-card kpi-completed">
+              <p class="kpi-label">Completadas a fecha</p>
+              <output class="kpi-value" id="kpi-completed" aria-label="Tareas completadas a fecha">—</output>
+              <p class="kpi-note" id="kpi-completed-context">Pendiente de carga</p>
+            </article>
+            <article class="kpi-card kpi-ratio">
+              <p class="kpi-label">Porcentaje completado</p>
+              <output class="kpi-value" id="kpi-completion-ratio" aria-label="Porcentaje de tareas completadas">—</output>
+              <p class="kpi-note">Completadas sobre total</p>
+            </article>
+            <article class="kpi-card kpi-delayed">
+              <p class="kpi-label">Retrasadas a fecha</p>
+              <output class="kpi-value" id="kpi-delayed" aria-label="Tareas retrasadas a fecha">—</output>
+              <p class="kpi-note" id="kpi-delayed-context">Pendiente de clasificación</p>
+            </article>
+          </div>
+
+          <div class="message-stack" role="region" aria-label="Estado de la carga">
+            <div class="status-message" id="loading-status" role="status" aria-live="polite">
+              <span class="loading-indicator" aria-hidden="true"></span>
+              <span>Preparando los datos del proyecto…</span>
+            </div>
+            <div class="alert-message" id="global-error" role="alert" hidden></div>
+            <div class="warning-message" id="quality-warnings" role="status" aria-live="polite" hidden></div>
+          </div>
+        </section>
+
+        <section class="gantt-section" aria-labelledby="gantt-title">
+          <div class="section-heading gantt-heading">
+            <div>
+              <p class="eyebrow">Planificación visible</p>
+              <h2 id="gantt-title">Gantt del proyecto</h2>
+            </div>
+            <div class="gantt-toolbar" aria-label="Escala del Gantt">
+              <div class="segmented-control" role="group" aria-label="Escala temporal">
+                <button type="button" data-scale="day" aria-pressed="false">Día</button>
+                <button type="button" data-scale="week" aria-pressed="true">Semana</button>
+                <button type="button" data-scale="month" aria-pressed="false">Mes</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="gantt-legend" aria-label="Leyenda del Gantt">
+            <span><i class="legend-key legend-progress" aria-hidden="true"></i> Avance actual</span>
+            <span><i class="legend-key legend-delayed" aria-hidden="true"></i> Retrasada</span>
+            <span><i class="legend-key legend-milestone" aria-hidden="true"></i> Hito</span>
+            <span><i class="legend-key legend-control" aria-hidden="true"></i> Fecha de control</span>
+          </div>
+
+          <div class="gantt-shell" id="gantt-shell">
+            <div class="gantt-task-pane" aria-labelledby="task-list-title">
+              <h3 id="task-list-title">Tareas</h3>
+              <div class="task-list" id="gantt-task-list" role="list" aria-busy="true">
+                <p class="task-placeholder">Las tareas aparecerán después de cargar el libro.</p>
+              </div>
+            </div>
+            <div class="gantt-timeline-pane" id="gantt-scroll-region" tabindex="0" aria-label="Línea temporal del proyecto">
+              <svg id="gantt-chart" role="img" aria-labelledby="gantt-svg-title gantt-svg-description">
+                <title id="gantt-svg-title">Línea temporal del proyecto</title>
+                <desc id="gantt-svg-description">El Gantt se mostrará cuando termine la carga del libro.</desc>
+              </svg>
+            </div>
+          </div>
+
+          <div class="empty-state" id="empty-state" hidden>
+            <h3>Sin tareas para estos filtros</h3>
+            <p>Pruebe otro intervalo, responsable o estado de completitud.</p>
+            <button class="button button-secondary" id="empty-clear-filters-button" type="button">Limpiar filtros</button>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <dialog class="task-dialog" id="task-details" aria-labelledby="task-details-title">
+      <div class="dialog-heading">
+        <div>
+          <p class="eyebrow">Detalle de tarea</p>
+          <h2 id="task-details-title">Tarea seleccionada</h2>
+        </div>
+        <button class="icon-button" id="close-task-details" type="button" aria-label="Cerrar detalle">×</button>
+      </div>
+      <dl class="task-detail-grid" id="task-detail-content"></dl>
+    </dialog>
+
+    <footer class="app-footer">
+      <p>Los datos se procesan localmente y el Excel permanece en modo de solo lectura.</p>
+      <a href="dashboard-assets/THIRD_PARTY_NOTICES.txt">Licencias de terceros</a>
+    </footer>
+
+    <noscript>Este cuadro de mando necesita JavaScript para leer el libro y actualizar los indicadores.</noscript>
+    <script src="dashboard-assets/vendor/xlsx-0.20.3.min.js" defer></script>
+    <script type="module" src="dashboard-config.js"></script>
+    <script type="module" src="dashboard-assets/app.js"></script>
+  </body>
+</html>
