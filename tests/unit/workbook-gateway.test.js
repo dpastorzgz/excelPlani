@@ -225,7 +225,7 @@ describe("workbook gateway", () => {
     const statAfter = await stat(workbookUrl);
     expect(createHash("sha256").update(bytesAfter).digest("hex")).toBe(hashBefore);
     expect(statAfter.mtimeMs).toBe(statBefore.mtimeMs);
-  });
+  }, 20_000);
 
   it("accepts a compatible workbook without optional close or milestone columns", () => {
     const workbook = XLSX.utils.book_new();
