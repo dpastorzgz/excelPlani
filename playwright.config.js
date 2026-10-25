@@ -5,7 +5,12 @@ export default defineConfig({
   fullyParallel: false,
   forbidOnly: Boolean(process.env.CI),
   retries: process.env.CI ? 1 : 0,
-  reporter: "list",
+  workers: process.env.CI ? 1 : undefined,
+  timeout: process.env.CI ? 60_000 : 30_000,
+  expect: {
+    timeout: process.env.CI ? 10_000 : 5_000,
+  },
+  reporter: process.env.CI ? [["list"], ["github"]] : "list",
   webServer: {
     command: "node start-dashboard.mjs --no-browser --port 4173 --idle-timeout-seconds 15",
     url: "http://127.0.0.1:4173/dashboard.html",
