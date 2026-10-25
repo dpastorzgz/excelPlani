@@ -1,0 +1,17 @@
+{
+  "sheets": {
+    "Proyecto Norte": [
+      ["Planificación del proyecto"],
+      ["Fecha de estado", "2026-05-15", "Fecha inicio proyecto", "2026-04-27"],
+      ["Fecha fin visible", "2026-06-21"],
+      [],
+      ["EDT", "Tarea", "Asignado", "Duración", "Inicio", "Fin", "% completado", "Estado", "Comentarios", "Fin línea base", "Fecha cierre real", "Nivel de riesgo", "Bloqueada", "Hito"],
+      ["1.1", "Definir alcance", "Ana", 5, "2026-04-27", "2026-05-01", 100, "Completo", "Validado", "2026-05-01", "2026-05-01", "Bajo", "No", "No"],
+      ["1.2", "Aprobar diseño", "", 1, "2026-05-04", "2026-05-04", 0, "Pendiente", "", "2026-05-04", null, "Medio", "Sí", "Sí"]
+    ],
+    "Notas": [
+      ["Texto libre"],
+      ["Sin estructura Gantt"]
+    ]
+  }
+}

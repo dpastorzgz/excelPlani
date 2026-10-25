@@ -1,0 +1,14 @@
+THIRD-PARTY SOFTWARE NOTICES
+============================
+
+SheetJS Community Edition 0.20.3
+--------------------------------
+Copyright (C) 2012-present SheetJS LLC
+License: Apache License, Version 2.0
+Source package: https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz
+
+The complete license text is included locally at
+dashboard-assets/vendor/LICENSE.sheetjs.txt.
+
+The vendored browser bundle is unmodified and is loaded locally. The dashboard
+does not depend on a public CDN at runtime.
