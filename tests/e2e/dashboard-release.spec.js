@@ -1,10 +1,12 @@
 import { expect, test } from "@playwright/test";
 
 import { WORKBOOK_FILE } from "../../dashboard-config.js";
+import { mockProjectWorkbook } from "./workbook-fixture.js";
 
 test("uses only loopback resources and enforces the release CSP", async ({ page }) => {
   const requestedHosts = new Set();
   page.on("request", (request) => requestedHosts.add(new URL(request.url()).hostname));
+  await mockProjectWorkbook(page);
   const response = await page.goto("/dashboard.html");
   await expect(page.locator("#source-status")).not.toContainText("Cargando");
   await expect(page.locator("#global-error")).toBeHidden();

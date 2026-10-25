@@ -2,12 +2,15 @@ import path from "node:path";
 
 import { expect, test } from "@playwright/test";
 
+import { mockProjectWorkbook } from "./workbook-fixture.js";
+
 const evidenceDirectory = path.resolve(
   "work-item/html-project-dashboard/_evidence/phase-05/TASK-006-css-layout",
 );
 
 test.beforeEach(async ({ page }) => {
   await page.emulateMedia({ reducedMotion: "reduce" });
+  await mockProjectWorkbook(page);
   await page.goto("/dashboard.html");
 });
 
