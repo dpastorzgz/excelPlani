@@ -252,7 +252,7 @@ function completionValue(value) {
 
 function booleanValue(value) {
   const normalized = normalizeHeader(value);
-  if (["si", "yes", "true", "1"].includes(normalized)) {
+  if (["si", "yes", "true", "1", "x"].includes(normalized)) {
     return true;
   }
   if (["no", "false", "0"].includes(normalized)) {

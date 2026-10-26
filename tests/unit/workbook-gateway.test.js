@@ -227,6 +227,27 @@ describe("workbook gateway", () => {
     expect(statAfter.mtimeMs).toBe(statBefore.mtimeMs);
   }, 20_000);
 
+  it("treats X and x as boolean true for Hito and Bloqueada without INVALID_BOOLEAN warnings", () => {
+    const rows = [
+      ["Tarea", "Inicio", "Fin", "% completado", "Estado", "Fecha cierre real", "Hito", "Bloqueada"],
+      ["Hito X", "2026-03-01", "2026-03-01", 0, "Pendiente", null, "X", null],
+      ["Hito x", "2026-03-02", "2026-03-02", 0, "Pendiente", null, "x", null],
+      ["Bloqueada X", "2026-03-05", "2026-03-10", 0, "Pendiente", null, null, "X"],
+      ["Normal", "2026-03-15", "2026-03-20", 0, "Pendiente", null, "No", "No"],
+    ];
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, XLSX.utils.aoa_to_sheet(rows), "Gantt");
+    const [descriptor] = detectGanttSheets(workbook, XLSX);
+    const plan = createProjectPlan(workbook, descriptor, { xlsx: XLSX });
+
+    expect(plan.qualityIssues.filter(({ code }) => code === "INVALID_BOOLEAN")).toHaveLength(0);
+    expect(plan.tasks[0].milestone).toBe(true);
+    expect(plan.tasks[1].milestone).toBe(true);
+    expect(plan.tasks[2].blocked).toBe(true);
+    expect(plan.tasks[3].milestone).toBe(false);
+    expect(plan.tasks[3].blocked).toBe(false);
+  });
+
   it("accepts a compatible workbook without optional close or milestone columns", () => {
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, XLSX.utils.aoa_to_sheet([

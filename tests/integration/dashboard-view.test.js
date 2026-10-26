@@ -153,18 +153,84 @@ describe("dashboard view", () => {
     expect(document.querySelector("#kpi-total").textContent).toBe("0");
   });
 
-  it("delegates project, reload and export actions", () => {
-    const handlers = { selectProject: vi.fn(), reload: vi.fn(), export: vi.fn() };
+  it("delegates project and reload actions — copy button no longer present", () => {
+    const handlers = { selectProject: vi.fn(), reload: vi.fn() };
     const store = createDashboardStore({
       status: "ready", sheets: [{ id: "Gantt", name: "Gantt" }], filters: { controlDate: "2026-01-05" },
     });
     createDashboardView({ document, store, handlers });
     document.querySelector("#project-sheet").dispatchEvent(new Event("change"));
     document.querySelector("#reload-workbook-button").click();
-    document.querySelector("#copy-dashboard-button").click();
     expect(handlers.selectProject).toHaveBeenCalledWith("Gantt");
     expect(handlers.reload).toHaveBeenCalledOnce();
-    expect(handlers.export).toHaveBeenCalledOnce();
+    expect(document.querySelector("#copy-dashboard-button")).toBeNull();
+  });
+
+  it("renders assignee below task name and hides it for unassigned tasks", () => {
+    const store = createDashboardStore({
+      status: "ready",
+      tasks: [
+        sampleTask({ assignee: "María López" }),
+        sampleTask({ id: "2", assignee: "Sin asignar" }),
+        sampleTask({ id: "3", assignee: "" }),
+      ],
+      filters: { controlDate: "2026-01-05" },
+    });
+    createDashboardView({ document, store });
+    const items = document.querySelectorAll(".gantt-task-item");
+    const assignees = document.querySelectorAll(".gantt-task-assignee");
+    expect(assignees).toHaveLength(1);
+    expect(assignees[0].textContent).toBe("María López");
+    expect(items[1].querySelector(".gantt-task-assignee")).toBeNull();
+    expect(items[2].querySelector(".gantt-task-assignee")).toBeNull();
+  });
+
+  it("renders Avance XX% labels on task bars and not on milestones", () => {
+    const store = createDashboardStore({
+      status: "ready",
+      tasks: [
+        sampleTask({ completionFraction: 0.55 }),
+        sampleTask({ id: "2", completionFraction: 0, milestone: true }),
+        sampleTask({ id: "3", completionFraction: 1 }),
+      ],
+      filters: { controlDate: "2026-01-05" },
+    });
+    createDashboardView({ document, store });
+    const labels = document.querySelectorAll(".gantt-progress-label");
+    expect(labels).toHaveLength(2);
+    expect(labels[0].textContent).toBe("Avance 55%");
+    expect(labels[1].textContent).toBe("Avance 100%");
+  });
+
+  it("setDateValue does not overwrite a focused date input but updates an unfocused one", () => {
+    const store = createDashboardStore({
+      status: "ready",
+      tasks: [sampleTask()],
+      filters: { controlDate: "2026-01-05" },
+    });
+    createDashboardView({ document, store });
+    const input = document.querySelector("#control-date");
+    expect(input.value).toBe("2026-01-05");
+
+    input.focus();
+    store.dispatch({ type: "FILTERS_CHANGED", filters: {
+      controlDate: "2026-02-10",
+      assignees: [],
+      dateFrom: null,
+      dateTo: null,
+      completion: "all",
+    } });
+    expect(input.value).toBe("2026-01-05");
+
+    input.blur();
+    store.dispatch({ type: "FILTERS_CHANGED", filters: {
+      controlDate: "2026-03-15",
+      assignees: [],
+      dateFrom: null,
+      dateTo: null,
+      completion: "all",
+    } });
+    expect(input.value).toBe("2026-03-15");
   });
 
   it("toggles a clean presentation view without losing the current snapshot", () => {

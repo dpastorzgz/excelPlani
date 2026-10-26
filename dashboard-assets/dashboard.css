@@ -572,14 +572,12 @@ main {
 .gantt-task-button {
   display: block;
   width: 100%;
-  height: 48px;
-  min-height: 48px;
-  padding: 0.55rem 1rem;
+  min-height: 0;
+  padding: 0.45rem 1rem 0.2rem;
   overflow: hidden;
   color: var(--ink-900);
   background: #ffffff;
   border: 0;
-  border-bottom: 1px solid var(--line);
   border-radius: 0;
   font-size: 0.82rem;
   font-weight: 700;
@@ -589,7 +587,24 @@ main {
 }
 
 .gantt-task-item {
-  height: 48px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  height: 60px;
+  border-bottom: 1px solid var(--line);
+  overflow: hidden;
+}
+
+.gantt-task-assignee {
+  display: block;
+  padding-inline: 1rem;
+  overflow: hidden;
+  color: var(--ink-600);
+  font-size: 0.72rem;
+  font-weight: 400;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  line-height: 1.3;
 }
 
 .gantt-task-button:hover,
@@ -610,6 +625,12 @@ main {
 .gantt-progress { fill: var(--teal-700); pointer-events: none; }
 .gantt-milestone { fill: var(--amber-700); }
 .gantt-milestone.is-delayed { fill: var(--red-700); }
+.gantt-progress-label {
+  font-size: 11px;
+  fill: var(--ink-600);
+  dominant-baseline: middle;
+  pointer-events: none;
+}
 
 .task-detail-grid {
   display: grid;

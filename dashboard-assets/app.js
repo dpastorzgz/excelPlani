@@ -1,7 +1,6 @@
 import { DASHBOARD_CONFIG } from "../dashboard-config.js";
 import { createDashboardStore } from "./dashboard-state.js";
 import { createDashboardView } from "./dashboard-view.js";
-import { exportDashboard } from "./presentation-exporter.js";
 import {
   createProjectPlan,
   loadProjectWorkbook,
@@ -18,16 +17,10 @@ export function createDashboardApplication({
   xlsx = globalThis.XLSX,
   loadWorkbook = loadProjectWorkbook,
   createPlan = createProjectPlan,
-  exportSnapshot = exportDashboard,
   now = new Date(),
 } = {}) {
   const store = createDashboardStore({ filters: { controlDate: null } });
   let loadedWorkbook = null;
-
-  function announce(message) {
-    const region = document.getElementById("source-status")?.lastElementChild;
-    if (region) region.textContent = message;
-  }
 
   function selectProject(sheetId) {
     const descriptor = loadedWorkbook?.sheets.find(({ id }) => id === sheetId);
@@ -65,24 +58,13 @@ export function createDashboardApplication({
     }
   }
 
-  async function exportCurrentSnapshot() {
-    try {
-      const result = await exportSnapshot(store.getState());
-      announce(result.message);
-      return result;
-    } catch {
-      announce("No se pudo generar la imagen. Revise los permisos del navegador.");
-      return null;
-    }
-  }
-
   const view = createDashboardView({
     document,
     store,
-    handlers: { selectProject, reload, export: exportCurrentSnapshot },
+    handlers: { selectProject, reload },
   });
 
-  return Object.freeze({ store, view, reload, selectProject, exportCurrentSnapshot });
+  return Object.freeze({ store, view, reload, selectProject });
 }
 
 if (typeof document !== "undefined" && !globalThis.__DASHBOARD_DISABLE_AUTO_START__) {

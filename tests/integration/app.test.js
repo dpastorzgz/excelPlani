@@ -57,13 +57,9 @@ describe("dashboard application composition", () => {
     expect(app.store.getState().selectedSheetId).toBe("Otro");
   });
 
-  it("exports the current snapshot only after the explicit action", async () => {
-    const exportSnapshot = vi.fn(async () => ({ method: "clipboard", message: "Copiada" }));
-    const app = createDashboardApplication({ document, exportSnapshot, loadWorkbook: vi.fn() });
-    expect(exportSnapshot).not.toHaveBeenCalled();
-    const result = await app.exportCurrentSnapshot();
-    expect(result.method).toBe("clipboard");
-    expect(exportSnapshot).toHaveBeenCalledWith(app.store.getState());
-    expect(document.querySelector("#source-status").lastElementChild.textContent).toBe("Copiada");
+  it("does not expose exportCurrentSnapshot and does not render the copy button", () => {
+    const app = createDashboardApplication({ document, loadWorkbook: vi.fn() });
+    expect(typeof app.exportCurrentSnapshot).toBe("undefined");
+    expect(document.querySelector("#copy-dashboard-button")).toBeNull();
   });
 });

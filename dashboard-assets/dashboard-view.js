@@ -1,7 +1,7 @@
 import { normalizeDateOnly } from "./planning-domain.js";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
-const ROW_HEIGHT = 48;
+const ROW_HEIGHT = 60;
 const YEAR_HEADER_HEIGHT = 28;
 const PERIOD_HEADER_HEIGHT = 44;
 const HEADER_HEIGHT = YEAR_HEADER_HEIGHT + PERIOD_HEADER_HEIGHT;
@@ -277,6 +277,12 @@ export function createDashboardView({ document, store, handlers = {} }) {
       });
       button.addEventListener("blur", () => setRowHighlight(task.id, false));
       item.append(button);
+      if (task.assignee && task.assignee !== "Sin asignar") {
+        const assigneeSpan = document.createElement("span");
+        assigneeSpan.className = "gantt-task-assignee";
+        assigneeSpan.textContent = task.assignee;
+        item.append(assigneeSpan);
+      }
       taskItemsById.set(task.id, item);
       return item;
     });
@@ -342,6 +348,11 @@ export function createDashboardView({ document, store, handlers = {} }) {
         group.append(svgElement(document, "rect", {
           class: "gantt-progress", x: row.x, y: row.y + 12, width: row.width * progress, height: 24, rx: 4,
         }));
+        group.append(svgElement(document, "text", {
+          class: "gantt-progress-label",
+          x: row.x + row.width + 6,
+          y: row.y + 28,
+        }, `Avance ${Math.round(progress * 100)}%`));
       }
       nodes.push(group);
     }
@@ -359,12 +370,18 @@ export function createDashboardView({ document, store, handlers = {} }) {
     byId("gantt-shell").hidden = !elements.empty.hidden;
   }
 
+  function setDateValue(el, value) {
+    if (document.activeElement !== el) {
+      el.value = value ?? "";
+    }
+  }
+
   function render(state) {
     renderProjects(state);
     renderAssignees(state);
-    elements.controlDate.value = state.filters.controlDate ?? "";
-    elements.dateFrom.value = state.filters.dateFrom ?? "";
-    elements.dateTo.value = state.filters.dateTo ?? "";
+    setDateValue(elements.controlDate, state.filters.controlDate);
+    setDateValue(elements.dateFrom, state.filters.dateFrom);
+    setDateValue(elements.dateTo, state.filters.dateTo);
     elements.completion.value = state.filters.completion;
     setText(elements.total, String(state.metrics.total));
     setText(elements.completed, String(state.metrics.completed));
@@ -404,7 +421,6 @@ export function createDashboardView({ document, store, handlers = {} }) {
   });
   elements.sheet.addEventListener("change", () => handlers.selectProject?.(elements.sheet.value));
   byId("reload-workbook-button").addEventListener("click", () => handlers.reload?.());
-  byId("copy-dashboard-button").addEventListener("click", () => handlers.export?.());
   byId("presentation-mode-button").addEventListener("click", () => {
     document.body.classList.toggle("presentation-mode");
   });
