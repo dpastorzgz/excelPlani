@@ -24,7 +24,6 @@ Update the table whenever a project is created, advances a phase, changes status
 |------|------|------------|------|--------|------|---------------|--------|--------------|
 | framework-v15-corrections | Framework v1.5 Corrections (P1–P4 + docs sync) | framework | feature | — | 0 | 8 | 🟡 | 2026-09-11 |
 | project-rules-overlay | Project Rules Overlay (`project-rules/` capa aditiva + contexto efectivo) | framework | feature | — | 0 | 8 | 🟡 | 2026-09-18 |
-| dashboard-cr-002 | Dashboard — Correcciones visuales y lógica de retraso v2 | web-standalone | feature | — | 0 | 1 | 🟡 | 2026-10-26 |
 
 
 ---

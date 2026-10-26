@@ -3,7 +3,7 @@
 ## 1. Summary
 
 - Date: 2026-10-26 | Track: change-request | Release: v0.3.0 (`987417f`)
-- Archive commit hash: **TBD**
+- Archive commit hash: `ab92b10`
 
 ## 2. What went well
 
@@ -31,6 +31,6 @@
 
 ## 7. Archive Movement Record
 
-- Archive commit hash: **TBD**
+- Archive commit hash: `ab92b10`
 - Original: `work-item/dashboard-cr-002/` → Archive: `work-item/archive/dashboard-cr-002/`
 - Archived: 2026-10-26, Europe/Madrid
