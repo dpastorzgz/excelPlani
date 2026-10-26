@@ -1,0 +1,21 @@
+project_slug: "dashboard-cr-005"
+project_name: "Gantt — Vista completa expandida con ocultación de tareas"
+created: "2026-10-26"
+updated: "2026-10-26"
+
+track: "change-request"
+technology: "web-standalone"
+framework_version: "1.5.0"
+
+status: active
+current_phase: 1
+phase_status: "Phase 1 — CR Intake en progreso"
+
+phases_completed: []
+phases_skipped: []
+blockers: []
+
+type: feature
+parent_epic: null
+depends_on: []
+wave: 0

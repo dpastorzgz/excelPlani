@@ -173,6 +173,9 @@
                 <button type="button" data-scale="week" aria-pressed="true">Semana</button>
                 <button type="button" data-scale="month" aria-pressed="false">Mes</button>
               </div>
+              <button type="button" id="full-gantt-open-button" class="button button-secondary">
+                Vista completa
+              </button>
             </div>
           </div>
 
@@ -206,6 +209,40 @@
         </section>
       </main>
     </div>
+
+    <dialog id="full-gantt-dialog" aria-label="Gantt completo del proyecto">
+      <div class="full-gantt-header">
+        <div>
+          <p class="eyebrow">Planificación completa</p>
+          <h2>Gantt del proyecto</h2>
+        </div>
+        <div class="full-gantt-controls">
+          <div class="segmented-control" role="group" aria-label="Escala de la vista completa">
+            <button type="button" data-full-scale="day" aria-pressed="false">Día</button>
+            <button type="button" data-full-scale="month" aria-pressed="true">Mes</button>
+            <button type="button" data-full-scale="year" aria-pressed="false">Año</button>
+          </div>
+          <div class="full-gantt-zoom-control" aria-label="Zoom de la vista completa">
+            <button type="button" id="full-gantt-zoom-out" class="full-gantt-zoom-btn" aria-label="Reducir zoom">−</button>
+            <span id="full-gantt-zoom-label" aria-live="polite">70%</span>
+            <button type="button" id="full-gantt-zoom-in" class="full-gantt-zoom-btn" aria-label="Aumentar zoom">+</button>
+          </div>
+          <button class="icon-button" id="full-gantt-close" type="button" aria-label="Cerrar vista completa">×</button>
+        </div>
+      </div>
+      <div class="full-gantt-shell">
+        <div class="full-gantt-task-pane" aria-label="Lista de tareas completa">
+          <div class="task-list" id="full-gantt-task-list" role="list" aria-busy="true">
+            <p class="task-placeholder">Cargando vista completa…</p>
+          </div>
+        </div>
+        <div class="full-gantt-timeline-pane" id="full-gantt-scroll-region" tabindex="0" aria-label="Línea temporal completa">
+          <svg id="full-gantt-chart" role="img" aria-label="Gantt completo">
+            <title>Gantt completo del proyecto</title>
+          </svg>
+        </div>
+      </div>
+    </dialog>
 
     <dialog class="task-dialog" id="task-details" aria-labelledby="task-details-title">
       <div class="dialog-heading">

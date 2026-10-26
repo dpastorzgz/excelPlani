@@ -22,7 +22,7 @@ function fromOrdinal(value) {
 }
 
 function scalePixels(scale) {
-  return { day: 52, week: 12, month: 4 }[scale] ?? 12;
+  return { day: 52, week: 12, month: 4, year: 1 }[scale] ?? 12;
 }
 
 function dateParts(value) {
@@ -88,6 +88,7 @@ export function computeGanttLayout(entries, {
   controlDate,
   scale = "week",
   viewport = {},
+  fitWidth = null,
 } = {}) {
   // Normalize: support legacy plain tasks array
   const normalizedEntries = (entries ?? []).map((entry) =>
@@ -132,7 +133,9 @@ export function computeGanttLayout(entries, {
     : Math.max(...(bounds.length ? bounds : [fallbackOrd + 30]));
   const normalizedEndOrdinal = Math.max(endOrdinal, startOrdinal + 1);
   const daySpan = normalizedEndOrdinal - startOrdinal + 1;
-  const pixelsPerDay = Math.max(scalePixels(scale), MIN_CHART_WIDTH / daySpan);
+  const pixelsPerDay = fitWidth !== null
+    ? Math.max(1, fitWidth / daySpan)
+    : Math.max(scalePixels(scale), MIN_CHART_WIDTH / daySpan);
   const width = daySpan * pixelsPerDay;
 
   // Build rows for all entries; task entries without valid dates are skipped
@@ -608,7 +611,267 @@ export function createDashboardView({ document, store, handlers = {} }) {
   byId("close-task-details").addEventListener("click", closeDetail);
   elements.dialog.addEventListener("close", () => lastTaskTrigger?.focus());
 
-  const unsubscribe = store.subscribe(render);
+  // ── Full Gantt view (TASK-004 … TASK-008) ──────────────────────────────
+  const fullDialog = byId("full-gantt-dialog");
+  const fullList = byId("full-gantt-task-list");
+  const fullChart = byId("full-gantt-chart");
+  const fullScroll = byId("full-gantt-scroll-region");
+
+  let fullGanttScale = "month";
+  let fullGanttZoom = 0.7;
+  let hiddenTaskIds = new Set();
+
+  function applyFullGanttZoom() {
+    const shell = fullDialog?.querySelector(".full-gantt-shell");
+    if (shell) shell.style.zoom = String(fullGanttZoom);
+    const label = byId("full-gantt-zoom-label");
+    if (label) label.textContent = `${Math.round(fullGanttZoom * 100)}%`;
+  }
+
+  function renderFullGantt(state) {
+    if (!fullDialog?.open) return;
+    const allDerivedTasks = state.derivedTasks;
+    const visibleTasks = (state.visibleDerivedTasks ?? state.derivedTasks)
+      .filter((t) => !hiddenTaskIds.has(t.id));
+    const sections = state.sections ?? [];
+    const collapsedSections = state.collapsedSections ?? [];
+
+    const ganttEntries = buildGanttEntries(sections, visibleTasks, allDerivedTasks, collapsedSections);
+    // Auto-fit: use available dialog width so the full timeline always fits on screen
+    const availableWidth = (fullScroll?.clientWidth || globalThis.innerWidth || 900) - 4;
+    const layout = computeGanttLayout(ganttEntries, {
+      controlDate: state.filters.controlDate,
+      scale: fullGanttScale,
+      viewport: {},
+      fitWidth: availableWidth,
+    });
+
+    // Update scale buttons
+    if (fullDialog) {
+      for (const btn of fullDialog.querySelectorAll("[data-full-scale]")) {
+        btn.setAttribute("aria-pressed", String(btn.dataset.fullScale === fullGanttScale));
+      }
+    }
+
+    // Hover highlight maps for full Gantt
+    const fullTaskItemsById = new Map();
+    const fullRowGroupsById = new Map();
+    const setFullRowHighlight = (taskId, highlighted) => {
+      fullTaskItemsById.get(taskId)?.classList.toggle("is-highlighted", highlighted);
+      fullRowGroupsById.get(taskId)?.classList.toggle("is-highlighted", highlighted);
+    };
+
+    // Build HTML task-list panel inside full dialog
+    const listItems = layout.rows.map((row) => {
+      if (row.kind === "section") {
+        const section = row.data;
+        const isCollapsed = collapsedSections.includes(section.id);
+        const item = document.createElement("div");
+        item.className = "gantt-section-header";
+        item.setAttribute("role", "listitem");
+        const toggle = document.createElement("button");
+        toggle.type = "button";
+        toggle.className = "gantt-section-toggle";
+        toggle.setAttribute("aria-expanded", String(!isCollapsed));
+        toggle.setAttribute("aria-label", `${isCollapsed ? "Expandir" : "Colapsar"} sección ${section.name}`);
+        setText(toggle, section.name);
+        toggle.addEventListener("click", () => {
+          store.dispatch({ type: "SECTION_TOGGLED", sectionId: section.id });
+        });
+        item.append(toggle);
+        return item;
+      }
+      // kind === "task"
+      const { task } = row;
+      const item = document.createElement("div");
+      item.className = "gantt-task-item";
+      item.setAttribute("role", "listitem");
+      item.addEventListener("pointerenter", () => setFullRowHighlight(task.id, true));
+      item.addEventListener("pointerleave", () => setFullRowHighlight(task.id, false));
+      fullTaskItemsById.set(task.id, item);
+      const isHidden = hiddenTaskIds.has(task.id);
+
+      const hideBtn = document.createElement("button");
+      hideBtn.type = "button";
+      hideBtn.className = `full-gantt-hide-toggle${isHidden ? " is-hidden" : ""}`;
+      hideBtn.setAttribute("aria-label", `${isHidden ? "Mostrar" : "Ocultar"} tarea ${task.name}`);
+      hideBtn.setAttribute("aria-pressed", String(isHidden));
+      setText(hideBtn, isHidden ? "👁" : "🙈");
+      hideBtn.addEventListener("click", () => {
+        if (hiddenTaskIds.has(task.id)) {
+          hiddenTaskIds.delete(task.id);
+        } else {
+          hiddenTaskIds.add(task.id);
+        }
+        renderFullGantt(store.getState());
+      });
+
+      const nameBtn = document.createElement("button");
+      nameBtn.type = "button";
+      nameBtn.className = "gantt-task-button";
+      setText(nameBtn, `${task.milestone ? "◆ Hito: " : ""}${task.name}`);
+      nameBtn.addEventListener("click", () => openDetail(task, nameBtn));
+
+      item.append(hideBtn, nameBtn);
+      if (task.assignee && task.assignee !== "Sin asignar") {
+        const assigneeSpan = document.createElement("span");
+        assigneeSpan.className = "gantt-task-assignee";
+        assigneeSpan.textContent = task.assignee;
+        item.append(assigneeSpan);
+      }
+      return item;
+    });
+    // Prepend a spacer matching HEADER_HEIGHT so task rows align with SVG rows
+    const headerSpacer = document.createElement("div");
+    headerSpacer.style.cssText = `height:${HEADER_HEIGHT}px;flex-shrink:0;background:var(--surface-muted);border-bottom:1px solid var(--line-strong);`;
+    headerSpacer.setAttribute("aria-hidden", "true");
+    replaceChildren(fullList, [headerSpacer, ...listItems]);
+    fullList.setAttribute("aria-busy", "false");
+
+    // Build SVG for full view (same rendering logic as renderGantt)
+    const rotateTickLabels = fullGanttScale === "day";
+    const svgNodes = [
+      svgElement(document, "title", {}, "Gantt completo del proyecto"),
+    ];
+    for (const year of layout.years) {
+      svgNodes.push(svgElement(document, "rect", {
+        class: "gantt-year-band", x: year.x, y: 0, width: year.width, height: YEAR_HEADER_HEIGHT,
+      }));
+      svgNodes.push(svgElement(document, "text", {
+        class: "gantt-year-label", x: year.x + year.width / 2, y: 19, "text-anchor": "middle",
+      }, year.label));
+    }
+    for (const tick of layout.ticks) {
+      svgNodes.push(svgElement(document, "rect", {
+        class: "gantt-period-cell", x: tick.x, y: YEAR_HEADER_HEIGHT, width: tick.width, height: PERIOD_HEADER_HEIGHT,
+      }));
+      svgNodes.push(svgElement(document, "line", { class: "gantt-grid-line", x1: tick.x, y1: HEADER_HEIGHT, x2: tick.x, y2: layout.height }));
+      const tickCx = tick.x + tick.width / 2;
+      if (rotateTickLabels) {
+        // Vertical label centred within the period band, rotated -90°
+        const tickCy = YEAR_HEADER_HEIGHT + PERIOD_HEADER_HEIGHT / 2;
+        svgNodes.push(svgElement(document, "text", {
+          class: "gantt-tick",
+          x: tickCx,
+          y: tickCy,
+          "text-anchor": "middle",
+          "dominant-baseline": "middle",
+          transform: `rotate(-90 ${tickCx} ${tickCy})`,
+        }, tick.label));
+      } else {
+        svgNodes.push(svgElement(document, "text", {
+          class: "gantt-tick", x: tickCx, y: YEAR_HEADER_HEIGHT + 27, "text-anchor": "middle",
+        }, tick.label));
+      }
+    }
+    for (const row of layout.rows) {
+      if (row.kind === "section") {
+        const group = svgElement(document, "g", { class: "gantt-section-row" });
+        group.append(svgElement(document, "rect", {
+          class: "gantt-section-band", x: 0, y: row.y, width: layout.width, height: ROW_HEIGHT,
+        }));
+        if (row.collapsed && row.summaryX !== null && row.summaryWidth !== null) {
+          group.append(svgElement(document, "rect", {
+            class: `gantt-section-summary-bar${row.allCompleted ? " is-completed" : ""}`,
+            x: row.summaryX, y: row.y + 12, width: row.summaryWidth, height: 24, rx: 4,
+          }));
+        }
+        svgNodes.push(group);
+        continue;
+      }
+      const { task } = row;
+      const group = svgElement(document, "g", { class: "gantt-row", "data-task-id": task.id });
+      group.append(svgElement(document, "rect", {
+        class: "gantt-row-highlight", x: 0, y: row.y, width: layout.width, height: ROW_HEIGHT,
+      }));
+      group.addEventListener("pointerenter", () => setFullRowHighlight(task.id, true));
+      group.addEventListener("pointerleave", () => setFullRowHighlight(task.id, false));
+      fullRowGroupsById.set(task.id, group);
+      const delayed = task.classification?.delayed || task.classification?.behindSchedule;
+      if (task.milestone) {
+        const msCx = row.x + layout.pixelsPerDay / 2;
+        group.append(svgElement(document, "rect", {
+          class: `gantt-milestone${delayed ? " is-delayed" : ""}`,
+          x: msCx - 8, y: row.y + 16, width: 16, height: 16,
+          transform: `rotate(45 ${msCx} ${row.y + 24})`,
+        }));
+      } else {
+        group.append(svgElement(document, "rect", {
+          class: `gantt-bar${delayed ? " is-delayed" : ""}`,
+          x: row.x, y: row.y + 12, width: row.width, height: 24, rx: 4,
+        }));
+        const progress = Math.max(0, Math.min(1, Number(task.completionFraction) || 0));
+        group.append(svgElement(document, "rect", {
+          class: "gantt-progress", x: row.x, y: row.y + 12, width: row.width * progress, height: 24, rx: 4,
+        }));
+        group.append(svgElement(document, "text", {
+          class: "gantt-progress-label", x: row.x + row.width + 6, y: row.y + 28,
+        }, `Avance ${Math.round(progress * 100)}%`));
+      }
+      svgNodes.push(group);
+    }
+    if (layout.controlX !== null) {
+      svgNodes.push(svgElement(document, "line", {
+        class: "gantt-control-line", x1: layout.controlX, y1: 0, x2: layout.controlX, y2: layout.height,
+      }));
+    }
+    fullChart.setAttribute("viewBox", `0 0 ${layout.width} ${layout.height}`);
+    fullChart.setAttribute("width", String(layout.width));
+    fullChart.setAttribute("height", String(layout.height));
+    replaceChildren(fullChart, svgNodes);
+    fullScroll.scrollLeft = Math.max(0, layout.firstTaskX - 16);
+  }
+
+  function openFullGantt() {
+    hiddenTaskIds = new Set();
+    fullGanttScale = "month";
+    fullGanttZoom = 0.7;
+    if (typeof fullDialog.showModal === "function") {
+      fullDialog.showModal();
+    } else {
+      fullDialog.setAttribute("open", "");
+    }
+    applyFullGanttZoom();
+    renderFullGantt(store.getState());
+    byId("full-gantt-close")?.focus();
+  }
+
+  function closeFullGantt() {
+    if (typeof fullDialog.close === "function") {
+      fullDialog.close();
+    } else {
+      fullDialog.removeAttribute("open");
+    }
+    byId("full-gantt-open-button")?.focus();
+  }
+
+  byId("full-gantt-zoom-out")?.addEventListener("click", () => {
+    fullGanttZoom = Math.max(0.3, Math.round((fullGanttZoom - 0.1) * 10) / 10);
+    applyFullGanttZoom();
+  });
+  byId("full-gantt-zoom-in")?.addEventListener("click", () => {
+    fullGanttZoom = Math.min(2.0, Math.round((fullGanttZoom + 0.1) * 10) / 10);
+    applyFullGanttZoom();
+  });
+  byId("full-gantt-open-button")?.addEventListener("click", openFullGantt);
+  byId("full-gantt-close")?.addEventListener("click", closeFullGantt);
+  fullDialog?.addEventListener("cancel", (e) => { e.preventDefault(); closeFullGantt(); });
+
+  for (const btn of document.querySelectorAll("[data-full-scale]")) {
+    btn.addEventListener("click", () => {
+      fullGanttScale = btn.dataset.fullScale;
+      renderFullGantt(store.getState());
+    });
+  }
+
+  const unsubscribe = store.subscribe((state) => {
+    render(state);
+    // Close full Gantt when project changes (TASK-008)
+    if (fullDialog?.open && state.selectedSheetId !== store.getState().selectedSheetId) {
+      closeFullGantt();
+    }
+    renderFullGantt(state);
+  });
   render(store.getState());
   return Object.freeze({ render, destroy: unsubscribe, closeDetail });
 }
