@@ -8,7 +8,7 @@
 - Track: `change-request`
 - Technology: `web-standalone`
 - Release: `v0.2.0` — tag on commit `868931f`
-- Archive commit hash: **TBD** — will be updated after archive movement commit
+- Archive commit hash: `0dcb934` (full: see `git log --oneline`)
 
 ---
 
@@ -78,7 +78,7 @@
 ## 9. Archive Movement Record
 
 - Archive commit message: `chore(archive): move dashboard-cr-001 to work-item/archive after Phase 10 closure`
-- Archive commit hash: **TBD** — to be updated after commit is executed
+- Archive commit hash: `0dcb934`
 - Original path: `work-item/dashboard-cr-001/`
 - Archive path: `work-item/archive/dashboard-cr-001/`
 - Archived by: Axet Agent

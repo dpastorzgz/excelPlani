@@ -8,9 +8,9 @@ track: "change-request"
 technology: "web-standalone"
 framework_version: "1.5.0"
 
-status: active
-current_phase: 6
-phase_status: "Phase 6 verification in progress"
+status: closed
+current_phase: 10
+phase_status: "Phase 10 archive complete — work-item physically relocated to work-item/archive/dashboard-cr-001"
 
 phases_completed:
   - phase: 1
@@ -29,6 +29,28 @@ phases_completed:
     completed_at: "2026-10-26"
     artifact: "05-build/build-log.md"
     approved_by: "user"
+  - phase: 6
+    completed_at: "2026-10-26"
+    artifact: "06-verification/verification-report.md"
+    approved_by: "user"
+  - phase: 7
+    completed_at: "2026-10-26"
+    artifact: "07-testing/test-report.md"
+    approved_by: "user"
+  - phase: 8
+    completed_at: "2026-10-26"
+    artifact: "08-commit-pr/closeout.md"
+    approved_by: "user"
+  - phase: 9
+    completed_at: "2026-10-26"
+    artifact: "09-release/release-notes.md"
+    approved_by: "user"
+    notes: "Tag v0.2.0 on commit 868931f. Pushed to main."
+  - phase: 10
+    completed_at: "2026-10-26"
+    artifact: "10-archive/retrospective.md"
+    approved_by: "user"
+    notes: "Archive commit 0dcb934. Work-item physically moved to work-item/archive/dashboard-cr-001/."
 phases_skipped:
   - phase: 3
     reason: "No architecture impact — cr-intake.md Section 6 checked 'No — skip Phase 3'."
