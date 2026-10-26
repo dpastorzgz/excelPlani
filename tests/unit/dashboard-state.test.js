@@ -87,4 +87,102 @@ describe("dashboard state", () => {
       .toThrow(TypeError);
     expect(() => store.dispatch({ type: "SCALE_CHANGED", scale: "year" })).toThrow(TypeError);
   });
+
+  it("initialises sections, collapsedSections and visibleDerivedTasks on PROJECT_SELECTED", () => {
+    const sectionA = Object.freeze({ id: "G:2", name: "Fase A", sourceRow: 2 });
+    const taskA = Object.freeze({ ...sampleTask, id: "G:3", sectionId: "G:2",
+      plannedStart: "2026-01-01", plannedEnd: "2026-01-10", actualClose: "2026-01-09" });
+    const store = createDashboardStore({ filters: { controlDate: "2026-01-10" } });
+    store.dispatch({ type: "PROJECT_SELECTED", plan: {
+      sheetId: "G",
+      tasks: [taskA],
+      sections: [sectionA],
+      qualityIssues: [],
+      date1904: false,
+    } });
+    const state = store.getState();
+
+    expect(state.sections).toHaveLength(1);
+    expect(state.sections[0]).toMatchObject({ id: "G:2", name: "Fase A" });
+    expect(state.collapsedSections).toHaveLength(0);
+    expect(state.visibleDerivedTasks).toHaveLength(1);
+  });
+
+  it("SECTION_TOGGLED collapses a section and filters visibleDerivedTasks", () => {
+    const sectionA = Object.freeze({ id: "G:2", name: "Fase A", sourceRow: 2 });
+    const taskA = Object.freeze({ ...sampleTask, id: "G:3", sectionId: "G:2",
+      plannedStart: "2026-01-01", plannedEnd: "2026-01-10", actualClose: "2026-01-09" });
+    const taskNoSection = Object.freeze({ ...sampleTask, id: "G:5", sectionId: null,
+      plannedStart: "2026-01-01", plannedEnd: "2026-01-10", actualClose: "2026-01-09" });
+    const store = createDashboardStore({ filters: { controlDate: "2026-01-10" } });
+    store.dispatch({ type: "PROJECT_SELECTED", plan: {
+      sheetId: "G",
+      tasks: [taskA, taskNoSection],
+      sections: [sectionA],
+      qualityIssues: [],
+      date1904: false,
+    } });
+
+    store.dispatch({ type: "SECTION_TOGGLED", sectionId: "G:2" });
+    const collapsed = store.getState();
+    expect(collapsed.collapsedSections).toContain("G:2");
+    expect(collapsed.visibleDerivedTasks).toHaveLength(1);
+    expect(collapsed.visibleDerivedTasks[0].id).toBe("G:5");
+
+    // Toggle again — expands
+    store.dispatch({ type: "SECTION_TOGGLED", sectionId: "G:2" });
+    const expanded = store.getState();
+    expect(expanded.collapsedSections).toHaveLength(0);
+    expect(expanded.visibleDerivedTasks).toHaveLength(2);
+  });
+
+  it("metrics are NOT affected by SECTION_TOGGLED (invariant ADR-0001)", () => {
+    const sectionA = Object.freeze({ id: "G:2", name: "Fase A", sourceRow: 2 });
+    const taskA = Object.freeze({ ...sampleTask, id: "G:3", sectionId: "G:2",
+      plannedStart: "2026-01-01", plannedEnd: "2026-01-10", actualClose: "2026-01-09" });
+    const store = createDashboardStore({ filters: { controlDate: "2026-01-10" } });
+    store.dispatch({ type: "PROJECT_SELECTED", plan: {
+      sheetId: "G",
+      tasks: [taskA],
+      sections: [sectionA],
+      qualityIssues: [],
+      date1904: false,
+    } });
+    const metricsBefore = store.getState().metrics;
+
+    store.dispatch({ type: "SECTION_TOGGLED", sectionId: "G:2" });
+    const metricsAfter = store.getState().metrics;
+
+    expect(metricsAfter.total).toBe(metricsBefore.total);
+    expect(metricsAfter.completed).toBe(metricsBefore.completed);
+    expect(metricsAfter.completionRatio).toBe(metricsBefore.completionRatio);
+  });
+
+  it("PROJECT_SELECTED resets collapsedSections to empty", () => {
+    const sectionA = Object.freeze({ id: "G:2", name: "Fase A", sourceRow: 2 });
+    const taskA = Object.freeze({ ...sampleTask, id: "G:3", sectionId: "G:2",
+      plannedStart: "2026-01-01", plannedEnd: "2026-01-10", actualClose: "2026-01-09" });
+    const store = createDashboardStore({ filters: { controlDate: "2026-01-10" } });
+    store.dispatch({ type: "PROJECT_SELECTED", plan: {
+      sheetId: "G", tasks: [taskA], sections: [sectionA], qualityIssues: [], date1904: false,
+    } });
+    store.dispatch({ type: "SECTION_TOGGLED", sectionId: "G:2" });
+    expect(store.getState().collapsedSections).toHaveLength(1);
+
+    // Re-selecting project resets collapse state
+    store.dispatch({ type: "PROJECT_SELECTED", plan: {
+      sheetId: "G", tasks: [taskA], sections: [sectionA], qualityIssues: [], date1904: false,
+    } });
+    expect(store.getState().collapsedSections).toHaveLength(0);
+    expect(store.getState().visibleDerivedTasks).toHaveLength(1);
+  });
+
+  it("WORKBOOK_LOADED resets sections and collapsedSections", () => {
+    const store = createDashboardStore();
+    store.dispatch({ type: "WORKBOOK_LOADED", sourceFile: "plan.xlsx", sheets: [{ id: "G" }] });
+    const state = store.getState();
+    expect(state.sections).toHaveLength(0);
+    expect(state.collapsedSections).toHaveLength(0);
+    expect(state.visibleDerivedTasks).toHaveLength(0);
+  });
 });

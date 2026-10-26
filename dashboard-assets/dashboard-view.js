@@ -79,45 +79,113 @@ function createYearBands(startOrdinal, endOrdinal, pixelsPerDay) {
   return Object.freeze(bands);
 }
 
-export function computeGanttLayout(tasks, {
+/**
+ * Computes Gantt layout from an ordered array of entries.
+ * Each entry is {kind: "task"|"section", data, ...extra}.
+ * Legacy: plain task objects (without .kind) are treated as task entries.
+ */
+export function computeGanttLayout(entries, {
   controlDate,
   scale = "week",
   viewport = {},
 } = {}) {
-  const datedTasks = tasks.map((task) => ({
-    task,
-    start: normalizeDateOnly(task.plannedStart),
-    end: normalizeDateOnly(task.plannedEnd),
-  })).filter(({ start, end }) => start && end);
-  const dates = datedTasks.flatMap(({ start, end }) => [ordinal(start), ordinal(end)]);
+  // Normalize: support legacy plain tasks array
+  const normalizedEntries = (entries ?? []).map((entry) =>
+    (entry && entry.kind) ? entry : { kind: "task", data: entry }
+  );
+
+  // Only task entries with valid dates contribute to time-axis bounds
+  const datedTaskInfos = normalizedEntries
+    .filter(({ kind }) => kind === "task")
+    .map(({ data: task }) => ({
+      task,
+      start: normalizeDateOnly(task.plannedStart),
+      end: normalizeDateOnly(task.plannedEnd),
+    }))
+    .filter(({ start, end }) => start && end);
+
+  const taskDateMap = new Map(
+    datedTaskInfos.map(({ task, start, end }) => [task, { start, end }])
+  );
+
+  const dates = datedTaskInfos.flatMap(({ start, end }) => [ordinal(start), ordinal(end)]);
+
+  // Also include summary ranges from collapsed sections so the axis spans correctly
+  const summaryDates = normalizedEntries
+    .filter(({ kind, summaryStart, summaryEnd }) => kind === "section" && summaryStart && summaryEnd)
+    .flatMap(({ summaryStart, summaryEnd }) => {
+      const s = normalizeDateOnly(summaryStart);
+      const e = normalizeDateOnly(summaryEnd);
+      return (s && e) ? [ordinal(s), ordinal(e)] : [];
+    });
+  const allDates = [...dates, ...summaryDates];
+
   const control = normalizeDateOnly(controlDate);
   const controlOrdinal = control ? ordinal(control) : null;
-  const bounds = controlOrdinal === null ? dates : [...dates, controlOrdinal];
-  const fallback = control ? ordinal(control) : ordinal("2026-01-01");
+  const bounds = controlOrdinal === null ? allDates : [...allDates, controlOrdinal];
+  const fallbackOrd = control ? ordinal(control) : ordinal("2026-01-01");
   const startOrdinal = viewport.start
     ? ordinal(viewport.start)
-    : Math.min(...(bounds.length ? bounds : [fallback]));
+    : Math.min(...(bounds.length ? bounds : [fallbackOrd]));
   const endOrdinal = viewport.end
     ? ordinal(viewport.end)
-    : Math.max(...(bounds.length ? bounds : [fallback + 30]));
+    : Math.max(...(bounds.length ? bounds : [fallbackOrd + 30]));
   const normalizedEndOrdinal = Math.max(endOrdinal, startOrdinal + 1);
   const daySpan = normalizedEndOrdinal - startOrdinal + 1;
   const pixelsPerDay = Math.max(scalePixels(scale), MIN_CHART_WIDTH / daySpan);
   const width = daySpan * pixelsPerDay;
-  const rows = datedTasks.map(({ task, start, end }, index) => {
-    const startDay = ordinal(start);
-    const endDay = ordinal(end);
+
+  // Build rows for all entries; task entries without valid dates are skipped
+  const rowEntries = normalizedEntries.filter(({ kind, data }) => {
+    if (kind === "section") return true;
+    return taskDateMap.has(data);
+  });
+
+  const rows = rowEntries.map((entry, index) => {
+    const { kind, data } = entry;
+    const y = HEADER_HEIGHT + index * ROW_HEIGHT;
+    if (kind === "section") {
+      // Compute summary bar position for collapsed sections
+      let summaryX = null;
+      let summaryWidth = null;
+      const sumStart = entry.summaryStart ? normalizeDateOnly(entry.summaryStart) : null;
+      const sumEnd = entry.summaryEnd ? normalizeDateOnly(entry.summaryEnd) : null;
+      if (sumStart && sumEnd) {
+        const sumStartDay = ordinal(sumStart);
+        const sumEndDay = ordinal(sumEnd);
+        summaryX = (sumStartDay - startOrdinal) * pixelsPerDay;
+        summaryWidth = Math.max(pixelsPerDay, (sumEndDay - sumStartDay + 1) * pixelsPerDay);
+      }
+      return Object.freeze({
+        kind: "section",
+        data,
+        x: 0,
+        y,
+        width: 0,
+        height: ROW_HEIGHT,
+        collapsed: entry.collapsed ?? false,
+        summaryX,
+        summaryWidth,
+        allCompleted: entry.allCompleted ?? false,
+      });
+    }
+    const task = data;
+    const info = taskDateMap.get(task);
+    const startDay = ordinal(info.start);
+    const endDay = ordinal(info.end);
     return Object.freeze({
+      kind: "task",
       task,
       x: (startDay - startOrdinal) * pixelsPerDay,
-      y: HEADER_HEIGHT + index * ROW_HEIGHT,
+      y,
       width: task.milestone ? 14 : Math.max(pixelsPerDay, (endDay - startDay + 1) * pixelsPerDay),
       height: ROW_HEIGHT,
     });
   });
+
   const ticks = createPeriodBands(startOrdinal, normalizedEndOrdinal, scale, pixelsPerDay);
   const years = createYearBands(startOrdinal, normalizedEndOrdinal, pixelsPerDay);
-  const firstTaskOrdinal = dates.length ? Math.min(...dates) : startOrdinal;
+  const firstTaskOrdinal = allDates.length ? Math.min(...allDates) : startOrdinal;
   return Object.freeze({
     width,
     height: HEADER_HEIGHT + Math.max(1, rows.length) * ROW_HEIGHT,
@@ -166,6 +234,65 @@ function detailEntries(task) {
     ["Estado", task.status || "No informado"],
     ["Comentarios", task.comments || "Sin comentarios"],
   ];
+}
+
+/**
+ * Builds the interleaved ordered list of entries (sections + tasks).
+ * - Sections with tasks in allDerivedTasks are always included (even when collapsed).
+ * - Collapsed sections include summary bar metadata.
+ * - Task entries only include tasks from visibleDerivedTasks (collapsed tasks excluded).
+ */
+function buildGanttEntries(sections, visibleDerivedTasks, allDerivedTasks, collapsedSections) {
+  const collapsedSet = new Set(collapsedSections ?? []);
+
+  // Map sectionId → all tasks from allDerivedTasks
+  const sectionTasksMap = new Map();
+  for (const task of allDerivedTasks ?? []) {
+    if (task.sectionId != null) {
+      if (!sectionTasksMap.has(task.sectionId)) {
+        sectionTasksMap.set(task.sectionId, []);
+      }
+      sectionTasksMap.get(task.sectionId).push(task);
+    }
+  }
+
+  // Include sections that have at least one task in allDerivedTasks
+  const activeSections = (sections ?? []).filter((s) => sectionTasksMap.has(s.id));
+
+  const sectionEntries = activeSections.map((s) => {
+    const isCollapsed = collapsedSet.has(s.id);
+    const tasks = sectionTasksMap.get(s.id) ?? [];
+    let summaryStart = null;
+    let summaryEnd = null;
+    let allCompleted = false;
+    if (isCollapsed && tasks.length > 0) {
+      const starts = tasks.map((t) => normalizeDateOnly(t.plannedStart)).filter(Boolean);
+      const ends = tasks.map((t) => normalizeDateOnly(t.plannedEnd)).filter(Boolean);
+      if (starts.length && ends.length) {
+        summaryStart = starts.reduce((a, b) => (a < b ? a : b));
+        summaryEnd = ends.reduce((a, b) => (a > b ? a : b));
+      }
+      allCompleted = tasks.every((t) => t.classification?.completed);
+    }
+    return {
+      kind: "section",
+      data: s,
+      sourceRow: s.sourceRow,
+      collapsed: isCollapsed,
+      summaryStart,
+      summaryEnd,
+      allCompleted,
+    };
+  });
+
+  // Only include task entries for visible (non-collapsed) tasks
+  const taskEntries = (visibleDerivedTasks ?? []).map((task) => ({
+    kind: "task",
+    data: task,
+    sourceRow: task.sourceRow,
+  }));
+
+  return [...sectionEntries, ...taskEntries].sort((a, b) => a.sourceRow - b.sourceRow);
 }
 
 export function createDashboardView({ document, store, handlers = {} }) {
@@ -251,18 +378,51 @@ export function createDashboardView({ document, store, handlers = {} }) {
   }
 
   function renderGantt(state) {
-    const layout = computeGanttLayout(state.derivedTasks, {
+    const visibleTasks = state.visibleDerivedTasks ?? state.derivedTasks;
+    const allDerivedTasks = state.derivedTasks;
+    const sections = state.sections ?? [];
+    const collapsedSections = state.collapsedSections ?? [];
+
+    const ganttEntries = buildGanttEntries(sections, visibleTasks, allDerivedTasks, collapsedSections);
+
+    const layout = computeGanttLayout(ganttEntries, {
       controlDate: state.filters.controlDate,
       scale: state.scale,
       viewport: state.viewport,
     });
+
     const taskItemsById = new Map();
     const rowGroupsById = new Map();
     const setRowHighlight = (taskId, highlighted) => {
       taskItemsById.get(taskId)?.classList.toggle("is-highlighted", highlighted);
       rowGroupsById.get(taskId)?.classList.toggle("is-highlighted", highlighted);
     };
-    const taskItems = layout.rows.map(({ task, x }) => {
+
+    // Build HTML task-list panel (sections + visible tasks interleaved)
+    const listItems = layout.rows.map((row) => {
+      if (row.kind === "section") {
+        const section = row.data;
+        const isCollapsed = collapsedSections.includes(section.id);
+        const sectionGroupId = `section-group-${section.id.replace(/[^a-zA-Z0-9-_]/gu, "_")}`;
+        const item = document.createElement("div");
+        item.className = "gantt-section-header";
+        item.setAttribute("role", "listitem");
+        const toggle = document.createElement("button");
+        toggle.type = "button";
+        toggle.className = "gantt-section-toggle";
+        toggle.setAttribute("aria-expanded", String(!isCollapsed));
+        toggle.setAttribute("aria-controls", sectionGroupId);
+        toggle.setAttribute("aria-label", `${isCollapsed ? "Expandir" : "Colapsar"} sección ${section.name}`);
+        setText(toggle, section.name);
+        toggle.addEventListener("click", () => {
+          store.dispatch({ type: "SECTION_TOGGLED", sectionId: section.id });
+        });
+        item.append(toggle);
+        return item;
+      }
+
+      // kind === "task"
+      const { task, x } = row;
       const item = document.createElement("div");
       item.className = "gantt-task-item";
       item.setAttribute("role", "listitem");
@@ -289,12 +449,13 @@ export function createDashboardView({ document, store, handlers = {} }) {
       taskItemsById.set(task.id, item);
       return item;
     });
-    replaceChildren(elements.list, taskItems);
+    replaceChildren(elements.list, listItems);
     elements.list.setAttribute("aria-busy", "false");
 
+    // Build SVG
     const title = svgElement(document, "title", { id: "gantt-svg-title" }, "Línea temporal del proyecto");
     const description = svgElement(document, "desc", { id: "gantt-svg-description" },
-      `${layout.rows.length} tareas a fecha ${state.filters.controlDate ?? "sin definir"}.`);
+      `${layout.rows.filter((r) => r.kind === "task").length} tareas a fecha ${state.filters.controlDate ?? "sin definir"}.`);
     const nodes = [title, description];
     for (const year of layout.years) {
       nodes.push(svgElement(document, "rect", {
@@ -306,31 +467,35 @@ export function createDashboardView({ document, store, handlers = {} }) {
     }
     for (const tick of layout.ticks) {
       nodes.push(svgElement(document, "rect", {
-        class: "gantt-period-cell",
-        x: tick.x,
-        y: YEAR_HEADER_HEIGHT,
-        width: tick.width,
-        height: PERIOD_HEADER_HEIGHT,
+        class: "gantt-period-cell", x: tick.x, y: YEAR_HEADER_HEIGHT, width: tick.width, height: PERIOD_HEADER_HEIGHT,
       }));
       nodes.push(svgElement(document, "line", { class: "gantt-grid-line", x1: tick.x, y1: HEADER_HEIGHT, x2: tick.x, y2: layout.height }));
       nodes.push(svgElement(document, "text", {
-        class: "gantt-tick",
-        x: tick.x + tick.width / 2,
-        y: YEAR_HEADER_HEIGHT + 27,
-        "text-anchor": "middle",
+        class: "gantt-tick", x: tick.x + tick.width / 2, y: YEAR_HEADER_HEIGHT + 27, "text-anchor": "middle",
       }, tick.label));
     }
     for (const row of layout.rows) {
-      const group = svgElement(document, "g", {
-        class: "gantt-row",
-        "data-task-id": row.task.id,
-      });
+      if (row.kind === "section") {
+        // Shaded background band — no text label in SVG (name shown in left panel only)
+        const group = svgElement(document, "g", { class: "gantt-section-row" });
+        group.append(svgElement(document, "rect", {
+          class: "gantt-section-band", x: 0, y: row.y, width: layout.width, height: ROW_HEIGHT,
+        }));
+        // Summary bar for collapsed sections
+        if (row.collapsed && row.summaryX !== null && row.summaryWidth !== null) {
+          group.append(svgElement(document, "rect", {
+            class: `gantt-section-summary-bar${row.allCompleted ? " is-completed" : ""}`,
+            x: row.summaryX, y: row.y + 12, width: row.summaryWidth, height: 24, rx: 4,
+          }));
+        }
+        nodes.push(group);
+        continue;
+      }
+
+      // kind === "task"
+      const group = svgElement(document, "g", { class: "gantt-row", "data-task-id": row.task.id });
       group.append(svgElement(document, "rect", {
-        class: "gantt-row-highlight",
-        x: 0,
-        y: row.y,
-        width: layout.width,
-        height: ROW_HEIGHT,
+        class: "gantt-row-highlight", x: 0, y: row.y, width: layout.width, height: ROW_HEIGHT,
       }));
       group.addEventListener("pointerenter", () => setRowHighlight(row.task.id, true));
       group.addEventListener("pointerleave", () => setRowHighlight(row.task.id, false));
@@ -353,9 +518,7 @@ export function createDashboardView({ document, store, handlers = {} }) {
           class: "gantt-progress", x: row.x, y: row.y + 12, width: row.width * progress, height: 24, rx: 4,
         }));
         group.append(svgElement(document, "text", {
-          class: "gantt-progress-label",
-          x: row.x + row.width + 6,
-          y: row.y + 28,
+          class: "gantt-progress-label", x: row.x + row.width + 6, y: row.y + 28,
         }, `Avance ${Math.round(progress * 100)}%`));
       }
       nodes.push(group);
@@ -370,7 +533,8 @@ export function createDashboardView({ document, store, handlers = {} }) {
     elements.chart.setAttribute("height", String(layout.height));
     replaceChildren(elements.chart, nodes);
     elements.scroll.scrollLeft = Math.max(0, layout.firstTaskX - 16);
-    elements.empty.hidden = state.status !== "ready" || state.derivedTasks.length > 0;
+    // Use layout.rows (sections + tasks) so the Gantt stays visible when all tasks are collapsed
+    elements.empty.hidden = state.status !== "ready" || layout.rows.length > 0;
     byId("gantt-shell").hidden = !elements.empty.hidden;
   }
 

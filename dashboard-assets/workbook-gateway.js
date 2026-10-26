@@ -361,6 +361,32 @@ function mappedValue(row, headerMap, field) {
   return columnIndex === undefined ? null : row[columnIndex];
 }
 
+/**
+ * Returns true when a data row represents a section header:
+ * has a non-empty name but lacks assignee, durationDays, plannedStart and plannedEnd.
+ */
+function isSectionRow(row, headerMap) {
+  const name = textValue(mappedValue(row, headerMap, "name"));
+  if (!name) {
+    return false;
+  }
+  return (
+    isBlank(mappedValue(row, headerMap, "assignee"))
+    && isBlank(mappedValue(row, headerMap, "durationDays"))
+    && isBlank(mappedValue(row, headerMap, "plannedStart"))
+    && isBlank(mappedValue(row, headerMap, "plannedEnd"))
+  );
+}
+
+function sectionFromRow(row, descriptor, sourceRow) {
+  const name = textValue(mappedValue(row, descriptor.headerMap, "name"));
+  return Object.freeze({
+    id: `${descriptor.id}:${sourceRow}`,
+    name,
+    sourceRow,
+  });
+}
+
 function taskFromRow(row, descriptor, sourceRow) {
   const { headerMap } = descriptor;
   const name = textValue(mappedValue(row, headerMap, "name"));
@@ -402,16 +428,25 @@ export function createProjectPlan(
 
   const rows = worksheetRows(worksheet, parser);
   const tasks = [];
+  const sections = [];
   const qualityIssues = [
     ...headerQualityIssues(rows[descriptor.headerRowIndex] ?? [], descriptor.headerRowNumber),
     ...missingRecommendedHeaderIssues(descriptor.headerMap, descriptor.headerRowNumber),
   ];
+  let currentSectionId = null;
   for (let rowIndex = descriptor.headerRowIndex + 1; rowIndex < rows.length; rowIndex += 1) {
     const rawRow = rows[rowIndex] ?? [];
-    const task = taskFromRow(rawRow, descriptor, rowIndex + 1);
-    if (task) {
-      tasks.push(task);
-      qualityIssues.push(...validateTaskValues(task, rawRow, descriptor, worksheet, parser));
+    if (isSectionRow(rawRow, descriptor.headerMap)) {
+      const section = sectionFromRow(rawRow, descriptor, rowIndex + 1);
+      sections.push(section);
+      currentSectionId = section.id;
+    } else {
+      const task = taskFromRow(rawRow, descriptor, rowIndex + 1);
+      if (task) {
+        const taskWithSection = Object.freeze({ ...task, sectionId: currentSectionId });
+        tasks.push(taskWithSection);
+        qualityIssues.push(...validateTaskValues(taskWithSection, rawRow, descriptor, worksheet, parser));
+      }
     }
   }
 
@@ -424,6 +459,7 @@ export function createProjectPlan(
     projectEnd: descriptor.metadata.projectEnd ?? null,
     date1904: Boolean(workbook?.Workbook?.WBProps?.date1904),
     tasks: Object.freeze(tasks),
+    sections: Object.freeze(sections),
     qualityIssues: Object.freeze(qualityIssues),
   });
 }
