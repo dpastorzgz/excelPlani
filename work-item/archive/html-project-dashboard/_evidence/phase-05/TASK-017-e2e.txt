@@ -1,0 +1,4 @@
+TASK-017 — PASS — 2026-10-24
+Deliverable: dashboard-assets/app.js (composition only).
+UC flows: workbook load/autoselect, control-date metrics, combined filters, Gantt detail/focus, presentation export.
+Verification: 58 unit/integration tests PASS; 10 Edge E2E tests PASS; no circular/shared monolith introduced.

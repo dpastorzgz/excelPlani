@@ -1,0 +1,4 @@
+TASK-010 — PASS — 2026-10-24
+Covered combined assignee, inclusive overlap, milestone and completion filters.
+Metrics covered: total, completed, ratio, delayed and excluded; empty ratio is null, not zero.
+Benchmark: 1,000 tasks <300 ms test budget => PASS.

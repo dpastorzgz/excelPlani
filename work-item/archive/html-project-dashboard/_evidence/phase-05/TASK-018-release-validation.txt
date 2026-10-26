@@ -1,0 +1,8 @@
+TASK-018 — PASS — 2026-10-25
+Runtime: Node.js v24.18.1; npm 11.16.0.
+Commands: lint PASS; 63/63 Vitest PASS; coverage 96.62 % statements / 88.00 % branches / 96.87 % functions / 97.29 % lines; Playwright E2E 14/14 PASS; PowerShell 7 and Windows PowerShell 5.1 harnesses PASS against the Node server.
+Framework validation: Git Bash framework/scripts/check-all.sh PASS — PROJECT-RULES none; ALL-CHECKS-PASS.
+Build: 16 local assets in dist/html-project-dashboard. manifest.sha256 verified by npm run validate:release. No Excel copied; release validator confirms workbook unchanged.
+Network/CSP: E2E confirms loopback-only resources, same-origin CSP and no serious/critical axe violations.
+Configured workbook: diagramaGanttBase.xlsm; SHA256 C9E8D01ABA136D71B84CCE27B93B9ADF1A8B6801DD77315E8BD49648000E59E7; size 5,300,137 bytes; LastWriteTimeUtc 2026-10-24T21:50:30; identical before and after validation.
+Release manifest file SHA256: CFB17998F081695C70CF604BE6D1CFDA5B8C4966D87D16B91092E4944E95CFB1.

@@ -1,0 +1,6 @@
+TASK-008 — PASS — 2026-10-24
+Typed QualityIssue fields: code, severity, row, affectedMetric, message.
+Covered: HTTP/error de formato, ausencia de headers Gantt, duplicados, fecha, rango, porcentaje, booleano y fórmula sin valor cacheado.
+Invalid source values remain unchanged and are never coerced silently to zero.
+Verification: tests/unit/workbook-gateway.test.js => PASS.
+Compatibility addendum: missing recommended headers produce warnings; complete rows without actual-close dates produce COMPLETE_WITHOUT_ACTUAL_CLOSE instead of fabricated dates.

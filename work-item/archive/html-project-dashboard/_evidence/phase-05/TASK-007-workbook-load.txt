@@ -1,0 +1,5 @@
+TASK-007 — PASS — 2026-10-24
+Deliverables: dashboard-assets/workbook-gateway.js, fixtures y tests unitarios.
+Reference workbook: hoja Gantt detectada en fila 8; mapeo por alias, sin columnas fijas; 0 tareas en la plantilla actual.
+Read-only proof: SHA256 antes/después 507924A704D0DA47B38FBD8FC3A3EED51A5783F910FA6776F0425CB34DE81AD2; mtime UTC sin cambios 2026-10-23T07:21:49.5174824Z.
+Compatibility addendum 2026-10-24: Plani Ferrovial - Airports_v1.xlsm detected as Gantt row 8 with 13 tasks. Fecha cierre real and Hito are optional/recommended. Configured workbook SHA256 remained 73F668FE5AF2AB4A9D0E3EC789A6C3E350234C48B217A48821F37D39E1B1F871.

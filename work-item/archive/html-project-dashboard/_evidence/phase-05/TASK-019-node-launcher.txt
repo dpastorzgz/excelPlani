@@ -1,0 +1,5 @@
+TASK-019 — PASS — 2026-10-25
+Implementation: start-dashboard.cmd invokes start-dashboard.mjs directly through node.exe; start-dashboard.ps1 remains optional and is not used by the CMD path.
+Server verification: npm run test:server PASS and npm run test:server:windows PASS. Both harnesses verified loopback binding, GET, HEAD, 404, 405, traversal rejection, controlled shutdown and workbook hash C9E8D01ABA136D71B84CCE27B93B9ADF1A8B6801DD77315E8BD49648000E59E7.
+Release verification: start-dashboard.cmd and start-dashboard.mjs are present in the 16-asset validated distribution.
+

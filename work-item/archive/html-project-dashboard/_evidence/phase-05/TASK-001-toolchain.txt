@@ -1,0 +1,25 @@
+TASK-001 — Toolchain y build reproducible
+Fecha: 2026-10-23
+
+Resultado: PASS
+
+- Node.js: v24.18.1 (requisito >=22)
+- npm: 11.16.0
+- Scripts verificados: lint, test, test:coverage, test:e2e, test:server, build, validate:release.
+- npm run lint: PASS, 0 errores.
+- npm test: PASS, 2 ficheros y 17 tests.
+- npm run test:coverage: PASS, 100% en los módulos ejecutables presentes en este lote.
+- npm run build: PASS, 6 activos locales en dist/html-project-dashboard/.
+- npm run validate:release: PASS.
+- Determinismo: dos builds consecutivos produjeron 6 rutas y hashes SHA256 idénticos.
+- Exclusión de workbook: 0 ficheros .xls/.xlsx/.xlsm/.xlsb en dist/.
+- Sintaxis: 7 ficheros JavaScript y start-dashboard.ps1 validados sin errores.
+- npm audit final: 0 vulnerabilidades conocidas.
+
+Salida autorizada:
+- dashboard-assets/THIRD_PARTY_NOTICES.txt
+- dashboard-assets/vendor/LICENSE.sheetjs.txt
+- dashboard-assets/vendor/xlsx-0.20.3.min.js
+- dashboard-config.js
+- start-dashboard.cmd
+- start-dashboard.ps1

@@ -1,0 +1,13 @@
+PASS — 2026-10-24
+
+El launcher de usuario start-dashboard.cmd ejecuta start-dashboard.mjs mediante
+Node.js y no invoca PowerShell. La politica ExecutionPolicy del equipo queda
+intacta.
+
+Prueba real:
+- comando: start-dashboard.cmd --no-browser --port 4199 --max-requests 2
+- GET /dashboard.html: HTTP 200
+- GET /Plani%20Ferrovial%20-%20Airports_v1.xlsm: HTTP 200
+- bytes del workbook: 2684623
+- MIME: application/vnd.ms-excel.sheet.macroEnabled.12
+- parada limpia: DASHBOARD_SERVER_STOP=max-requests

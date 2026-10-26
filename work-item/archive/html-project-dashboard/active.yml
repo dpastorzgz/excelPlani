@@ -1,0 +1,59 @@
+project_slug: "html-project-dashboard"
+project_name: "Cuadro de mando HTML para planificación de proyectos"
+created: "2026-10-23"
+updated: "2026-10-26"
+
+track: "new-feature"
+
+technology: "web-standalone"
+framework_version: "1.5.0"
+
+status: active
+current_phase: 10
+phase_status: "Phase 10 archive in progress — retrospective created, physical move pending"
+
+phases_completed:
+  - phase: 1
+    completed_at: "2026-10-23"
+    artifact: "01-proposal/proposal.md"
+    approved_by: "user"
+  - phase: 2
+    completed_at: "2026-10-25"
+    artifact: "02-specs/specs.md"
+    approved_by: "user"
+  - phase: 3
+    completed_at: "2026-10-25"
+    artifact: "03-design/design.md"
+    approved_by: "user"
+  - phase: 4
+    completed_at: "2026-10-25"
+    artifact: "04-tasks/task-list.md"
+    approved_by: "user"
+  - phase: 5
+    completed_at: "2026-10-25"
+    artifact: "05-build/build-log.md"
+    approved_by: "user"
+  - phase: 6
+    completed_at: "2026-10-25"
+    artifact: "06-verification/verification-report.md"
+    approved_by: "user"
+  - phase: 7
+    completed_at: "2026-10-25"
+    artifact: "07-testing/test-report.md"
+    approved_by: "user"
+  - phase: 8
+    completed_at: "2026-10-26"
+    artifact: "08-commit-pr/closeout.md"
+    approved_by: "user"
+  - phase: 9
+    completed_at: "2026-10-26"
+    artifact: "09-release/release-notes.md"
+    approved_by: "user"
+    notes: "Tag v0.1.0 created on 138b37bb0d88175c81a9889acd8327bef9a7603d. Local-qa deployment validated. User approved phase_9_to_10 transition."
+phases_skipped: []
+blockers: []
+
+type: feature
+parent_epic: null
+depends_on: []
+wave: 0

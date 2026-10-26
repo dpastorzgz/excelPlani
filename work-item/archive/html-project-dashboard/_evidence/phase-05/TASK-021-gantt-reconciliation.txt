@@ -1,0 +1,5 @@
+TASK-021 — PASS — 2026-10-25
+Implementation: one horizontally scrolling SVG contains year/period headers, grid, bars, milestones and the dashed red control-date line. Task names and marks share 48 px rows without independent vertical scrolling. Pointer hover and keyboard focus highlight the complete linked row. Day/week labels use DD/MM, month labels use Spanish names, and the day scale reserves at least 52 px per date. The obsolete Adjust tasks control is absent and the view positions itself at the first task.
+Automated evidence: Playwright dashboard-layout.spec.js passes alignment at every scale, complete-row highlight, single scrolling SVG grid, Spanish time headers, dashed red control date, 200 percent text scale, reduced motion and visible focus. Full E2E result: 14/14 PASS; axe serious/critical violations: 0.
+Unit/integration evidence: 63/63 Vitest PASS; coverage for dashboard-view.js is 96.61 % statements, 81.08 % branches, 92.45 % functions and 98.59 % lines.
+

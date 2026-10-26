@@ -1,0 +1,4 @@
+TASK-016 — PASS — 2026-10-24
+Presentation mode hides editing controls without changing filters or metrics.
+Clipboard mock receives image/png; denial uses the same Blob for dashboard-YYYY-MM-DD.png download.
+E2E download filename and accessible outcome announcement: PASS.

@@ -1,0 +1,12 @@
+TASK-004 — Configuración única del workbook
+Fecha: 2026-10-23
+
+Resultado: PASS
+
+- Única definición autoritativa encontrada: export const WORKBOOK_FILE en dashboard-config.js.
+- Valor actual: diagramaGanttBase.xlsm.
+- Configuración expuesta mediante objeto inmutable DASHBOARD_CONFIG.
+- Validación positiva: .xlsx/.xlsm, mayúsculas y espacios internos.
+- Validación negativa: vacío, espacios exteriores, ruta relativa/absoluta, URL, traversal, extensión no soportada y caracteres de control.
+- Tests de configuración incluidos en el total de 17 tests PASS.
+- Para cambiar el libro solo se modifica la constante WORKBOOK_FILE de dashboard-config.js.

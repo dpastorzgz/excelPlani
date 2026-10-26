@@ -1,0 +1,14 @@
+TASK-002 — SheetJS local y licencias
+Fecha: 2026-10-23
+
+Resultado: PASS
+
+- Versión fijada: SheetJS CE 0.20.3.
+- Paquete oficial: vendor/xlsx-0.20.3.tgz.
+- SHA256 paquete: 8DC73FC3B00203E72D176E85B50938627C7B086E607C682E8D3C22C02BB99FE8.
+- Bundle local: dashboard-assets/vendor/xlsx-0.20.3.min.js.
+- SHA256 bundle: CC015130AA8521E7F088F88898EBA949CCDCBFB38DF0BD129B44B7273C3A6F41.
+- Test del paquete y del bundle de navegador: XLSX.version = 0.20.3.
+- Licencia Apache 2.0 completa: dashboard-assets/vendor/LICENSE.sheetjs.txt.
+- Atribución: dashboard-assets/THIRD_PARTY_NOTICES.txt.
+- Runtime: no existe referencia ejecutable a cdn.sheetjs.com; la URL oficial solo queda como procedencia documental.

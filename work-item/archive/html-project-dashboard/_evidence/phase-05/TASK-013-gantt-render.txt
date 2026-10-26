@@ -1,0 +1,4 @@
+TASK-013 — PASS — 2026-10-24
+SVG layout covers inclusive bars, milestones, ticks, control line and day/week/month scales.
+Real DOM render benchmark: 1,000 task buttons + 1,000 SVG bars in 142 ms (<1 s budget).
+Rows use the same 48 px height in list and timeline.

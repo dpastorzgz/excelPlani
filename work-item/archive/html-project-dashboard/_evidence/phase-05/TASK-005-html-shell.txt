@@ -1,0 +1,4 @@
+TASK-005 — PASS — 2026-10-24
+Deliverables: dashboard.html, tests/e2e/dashboard-shell.spec.js
+Evidence: HTML semántico en español; CSS y JavaScript exclusivamente externos; skip link, regiones live, filtros, KPIs, Gantt y diálogo.
+Verification: npm run test:e2e => 10/10 PASS; axe serious/critical => 0; teclado y foco => PASS.

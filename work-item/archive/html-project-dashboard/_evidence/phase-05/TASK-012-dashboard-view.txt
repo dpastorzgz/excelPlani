@@ -1,0 +1,4 @@
+TASK-012 — PASS — 2026-10-24
+Deliverable: dashboard-assets/dashboard-view.js.
+DOM binding, labels, KPIs, warnings, load/error/empty states and source context share one store snapshot.
+Untrusted workbook content is inserted with textContent; injection fixture creates no executable/image node.

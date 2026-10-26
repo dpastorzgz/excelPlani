@@ -1,0 +1,5 @@
+TASK-009 — PASS — 2026-10-24
+Deliverables: dashboard-assets/planning-domain.js, tests/unit/planning-domain.test.js.
+Covered: strict date-only, Excel 1900/1904, leap day, baseline fallback, boundary completion, open overdue, late close, complete-without-close inconsistency.
+No historical completion is inferred without an actual close date.
+Compatibility addendum: current-complete tasks without actual close have completionKnown=false and delayKnown=false, so they are not falsely counted as delayed.

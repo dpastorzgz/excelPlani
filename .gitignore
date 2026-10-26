@@ -70,9 +70,10 @@ jest.config.js
 package.json
 package-lock.json
 sfdx-project.json
-work-item/
+work-item/*
+!work-item/archive
+!work-item/README.md
 force-app
-archive
 
 # Standalone project dashboard sources and build tooling
 !package.json
@@ -86,4 +87,3 @@ dist/
 coverage/
 test-results/
 playwright-report/
-

@@ -1,0 +1,15 @@
+TASK-003 — Launcher y servidor loopback
+Fecha: 2026-10-23
+
+Resultado: PASS
+
+- Listener vinculado a 127.0.0.1 con puerto libre.
+- Métodos permitidos: GET y HEAD.
+- Probados: GET 200, HEAD 200 sin body, 404, POST 405, traversal 403 y cierre controlado.
+- Directorios no se sirven porque solo se aceptan rutas que resuelven a ficheros.
+- Cabeceras: CSP local, nosniff, no-referrer y no-store.
+- Compatibilidad: PASS con PowerShell 7 y Windows PowerShell 5.1.
+- El launcher respeta la ExecutionPolicy del equipo y muestra diagnóstico si el host bloquea scripts.
+- El bypass de política se empleó solo en el proceso de test para probar PowerShell 5.1; no forma parte del launcher.
+- Workbook SHA256 antes/después: 507924A704D0DA47B38FBD8FC3A3EED51A5783F910FA6776F0425CB34DE81AD2.
+- Workbook LastWriteTimeUtc: 2026-10-23T07:21:49.5174824Z, sin cambios.
