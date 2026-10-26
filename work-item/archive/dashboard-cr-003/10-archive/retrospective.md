@@ -2,7 +2,7 @@
 
 ## 1. Summary
 
-- Date: 2026-10-26 | Release: v0.4.0 (`8456b4e`) | Archive commit: **TBD**
+- Date: 2026-10-26 | Release: v0.4.0 (`8456b4e`) | Archive commit: `0837e9b`
 
 ## 2. What went well
 
@@ -24,6 +24,6 @@
 
 ## 6. Archive Movement Record
 
-- Archive commit hash: **TBD**
+- Archive commit hash: `0837e9b`
 - Original: `work-item/dashboard-cr-003/` → Archive: `work-item/archive/dashboard-cr-003/`
 - Archived: 2026-10-26

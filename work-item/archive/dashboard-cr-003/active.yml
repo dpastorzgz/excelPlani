@@ -49,7 +49,7 @@ phases_completed:
     completed_at: "2026-10-26"
     artifact: "10-archive/retrospective.md"
     approved_by: "user"
-    notes: "Archive commit TBD."
+    notes: "Archive commit 0837e9b. Work-item physically moved to work-item/archive/dashboard-cr-003/."
 phases_skipped:
   - phase: 3
     reason: "No architecture impact."
