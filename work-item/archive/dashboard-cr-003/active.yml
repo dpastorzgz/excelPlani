@@ -1,0 +1,63 @@
+project_slug: "dashboard-cr-003"
+project_name: "Dashboard — Rediseño de KPIs v3"
+created: "2026-10-26"
+updated: "2026-10-26"
+
+track: "change-request"
+technology: "web-standalone"
+framework_version: "1.5.0"
+
+status: closed
+current_phase: 10
+phase_status: "Phase 10 archive complete"
+
+phases_completed:
+  - phase: 1
+    completed_at: "2026-10-26"
+    artifact: "01-proposal/cr-intake.md"
+    approved_by: "user"
+  - phase: 2
+    completed_at: "2026-10-26"
+    artifact: "02-specs/specs.md"
+    approved_by: "user"
+  - phase: 4
+    completed_at: "2026-10-26"
+    artifact: "04-tasks/task-list.md"
+    approved_by: "user"
+  - phase: 5
+    completed_at: "2026-10-26"
+    artifact: "05-build/build-log.md"
+    approved_by: "user"
+  - phase: 6
+    completed_at: "2026-10-26"
+    artifact: "06-verification/verification-report.md"
+    approved_by: "user"
+  - phase: 7
+    completed_at: "2026-10-26"
+    artifact: "07-testing/test-report.md"
+    approved_by: "user"
+  - phase: 8
+    completed_at: "2026-10-26"
+    artifact: "08-commit-pr/closeout.md"
+    approved_by: "user"
+  - phase: 9
+    completed_at: "2026-10-26"
+    artifact: "09-release/release-notes.md"
+    approved_by: "user"
+    notes: "Tag v0.4.0 on commit 8456b4e."
+  - phase: 10
+    completed_at: "2026-10-26"
+    artifact: "10-archive/retrospective.md"
+    approved_by: "user"
+    notes: "Archive commit TBD."
+phases_skipped:
+  - phase: 3
+    reason: "No architecture impact."
+    evidence: "01-proposal/cr-intake.md Section 6"
+    approved_by: "user"
+blockers: []
+
+type: feature
+parent_epic: null
+depends_on: []
+wave: 0
