@@ -1,0 +1,42 @@
+project_slug: "dashboard-cr-001"
+project_name: "Dashboard — Mejoras y correcciones v1"
+created: "2026-10-26"
+updated: "2026-10-26"
+
+track: "change-request"
+
+technology: "web-standalone"
+framework_version: "1.5.0"
+
+status: active
+current_phase: 6
+phase_status: "Phase 6 verification in progress"
+
+phases_completed:
+  - phase: 1
+    completed_at: "2026-10-26"
+    artifact: "01-proposal/cr-intake.md"
+    approved_by: "user"
+  - phase: 2
+    completed_at: "2026-10-26"
+    artifact: "02-specs/specs.md"
+    approved_by: "user"
+  - phase: 4
+    completed_at: "2026-10-26"
+    artifact: "04-tasks/task-list.md"
+    approved_by: "user"
+  - phase: 5
+    completed_at: "2026-10-26"
+    artifact: "05-build/build-log.md"
+    approved_by: "user"
+phases_skipped:
+  - phase: 3
+    reason: "No architecture impact — cr-intake.md Section 6 checked 'No — skip Phase 3'."
+    evidence: "01-proposal/cr-intake.md Section 6"
+    approved_by: "user"
+blockers: []
+
+type: feature
+parent_epic: null
+depends_on: []
+wave: 0
