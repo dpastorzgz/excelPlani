@@ -38,7 +38,8 @@ describe("dashboard application composition", () => {
     expect(createPlan).toHaveBeenCalledOnce();
     expect(app.store.getState()).toMatchObject({ status: "ready", selectedSheetId: "Gantt", metrics: { total: 1, completed: 1 } });
     expect(app.store.getState().filters.controlDate).toBe("2026-05-15");
-    expect(document.querySelector("#kpi-completed").textContent).toBe("1");
+    expect(document.querySelector("#kpi-total").textContent).toBe("1");
+    expect(document.querySelector("#kpi-closed-on-time").textContent).toBe("1");
   });
 
   it("keeps multiple projects selectable and reports typed load failures", async () => {

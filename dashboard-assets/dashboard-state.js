@@ -22,7 +22,9 @@ function freezeViewport(viewport = {}) {
 function createInitialState(overrides = {}) {
   const tasks = Object.freeze([...(overrides.tasks ?? [])]);
   const filters = freezeFilters(overrides.filters ?? {});
-  const derived = deriveDashboard(tasks, filters, { date1904: Boolean(overrides.date1904) });
+  const projectStart = overrides.projectStart ?? null;
+  const projectEnd = overrides.projectEnd ?? null;
+  const derived = deriveDashboard(tasks, filters, { date1904: Boolean(overrides.date1904), projectStart, projectEnd });
   return Object.freeze({
     status: overrides.status ?? "idle",
     sourceFile: overrides.sourceFile ?? "",
@@ -31,6 +33,8 @@ function createInitialState(overrides = {}) {
     tasks,
     qualityIssues: Object.freeze([...(overrides.qualityIssues ?? [])]),
     date1904: Boolean(overrides.date1904),
+    projectStart,
+    projectEnd,
     filters,
     scale: overrides.scale ?? "week",
     viewport: freezeViewport(overrides.viewport),
@@ -44,13 +48,17 @@ function recalculate(state, updates = {}) {
   const tasks = updates.tasks ?? state.tasks;
   const filters = updates.filters ?? state.filters;
   const date1904 = updates.date1904 ?? state.date1904;
-  const derived = deriveDashboard(tasks, filters, { date1904 });
+  const projectStart = updates.projectStart ?? state.projectStart ?? null;
+  const projectEnd = updates.projectEnd ?? state.projectEnd ?? null;
+  const derived = deriveDashboard(tasks, filters, { date1904, projectStart, projectEnd });
   return Object.freeze({
     ...state,
     ...updates,
     tasks: Object.freeze([...tasks]),
     filters: freezeFilters(filters),
     date1904,
+    projectStart,
+    projectEnd,
     derivedTasks: derived.tasks,
     metrics: derived.metrics,
   });
@@ -95,6 +103,8 @@ export function dashboardReducer(state, action) {
         tasks: action.plan.tasks,
         qualityIssues: action.plan.qualityIssues,
         date1904: action.plan.date1904,
+        projectStart: action.plan.projectStart ?? null,
+        projectEnd: action.plan.projectEnd ?? null,
         filters,
         error: null,
       });

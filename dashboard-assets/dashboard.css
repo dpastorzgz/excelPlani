@@ -377,7 +377,7 @@ main {
 
 .kpi-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(9rem, 1fr));
+  grid-template-columns: repeat(3, minmax(9rem, 1fr));
   gap: 0.9rem;
 }
 
@@ -403,13 +403,16 @@ main {
 }
 
 .kpi-grid-secondary {
-  grid-template-columns: repeat(3, minmax(9rem, 1fr));
+  grid-template-columns: repeat(4, minmax(9rem, 1fr));
   margin-top: 0.5rem;
 }
 
 .kpi-closed-on-time { border-top-color: var(--teal-700); }
 .kpi-closed-late { border-top-color: var(--amber-700); }
 .kpi-behind-schedule { border-top-color: #8b2fc9; }
+.kpi-time-elapsed { border-top-color: var(--blue-700); }
+.kpi-time-remaining { border-top-color: var(--teal-500); }
+.kpi-in-progress { border-top-color: var(--ink-600); }
 
 .kpi-label,
 .kpi-note {

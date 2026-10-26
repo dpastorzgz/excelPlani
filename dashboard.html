@@ -110,30 +110,25 @@
             <p class="context-line" id="active-filter-context">Sin filtros aplicados</p>
           </div>
 
-          <div class="kpi-grid" aria-label="Indicadores del proyecto">
+          <div class="kpi-grid" aria-label="Visión temporal del proyecto">
             <article class="kpi-card kpi-total">
               <p class="kpi-label">Tareas del proyecto</p>
               <output class="kpi-value" id="kpi-total" aria-label="Tareas del proyecto">—</output>
               <p class="kpi-note">Conjunto filtrado</p>
             </article>
-            <article class="kpi-card kpi-completed">
-              <p class="kpi-label">Completadas a fecha</p>
-              <output class="kpi-value" id="kpi-completed" aria-label="Tareas completadas a fecha">—</output>
-              <p class="kpi-note" id="kpi-completed-context">Pendiente de carga</p>
+            <article class="kpi-card kpi-time-elapsed">
+              <p class="kpi-label">Tiempo transcurrido</p>
+              <output class="kpi-value" id="kpi-time-elapsed" aria-label="Porcentaje de tiempo transcurrido">—</output>
+              <p class="kpi-note">Desde inicio del proyecto</p>
             </article>
-            <article class="kpi-card kpi-ratio">
-              <p class="kpi-label">Porcentaje completado</p>
-              <output class="kpi-value" id="kpi-completion-ratio" aria-label="Porcentaje de tareas completadas">—</output>
-              <p class="kpi-note">Completadas sobre total</p>
-            </article>
-            <article class="kpi-card kpi-delayed">
-              <p class="kpi-label">Vencidas abiertas</p>
-              <output class="kpi-value" id="kpi-delayed" aria-label="Tareas abiertas vencidas a fecha">—</output>
-              <p class="kpi-note">Sin cierre y plazo superado</p>
+            <article class="kpi-card kpi-time-remaining">
+              <p class="kpi-label">Tiempo restante</p>
+              <output class="kpi-value" id="kpi-time-remaining" aria-label="Porcentaje de tiempo restante">—</output>
+              <p class="kpi-note" id="kpi-days-remaining">Días hasta fecha fin</p>
             </article>
           </div>
 
-          <div class="kpi-grid kpi-grid-secondary" aria-label="Detalle de completitud">
+          <div class="kpi-grid kpi-grid-secondary" aria-label="Clasificación de tareas">
             <article class="kpi-card kpi-closed-on-time">
               <p class="kpi-label">Cerradas a tiempo</p>
               <output class="kpi-value" id="kpi-closed-on-time" aria-label="Tareas cerradas a tiempo">—</output>
@@ -143,6 +138,11 @@
               <p class="kpi-label">Cerradas con retraso</p>
               <output class="kpi-value" id="kpi-closed-late" aria-label="Tareas cerradas fuera de plazo">—</output>
               <p class="kpi-note">Cierre después del plazo</p>
+            </article>
+            <article class="kpi-card kpi-in-progress">
+              <p class="kpi-label">Tareas en curso</p>
+              <output class="kpi-value" id="kpi-in-progress" aria-label="Tareas actualmente en curso">—</output>
+              <p class="kpi-note">Abiertas a fecha de control</p>
             </article>
             <article class="kpi-card kpi-behind-schedule">
               <p class="kpi-label">En curso retrasadas</p>

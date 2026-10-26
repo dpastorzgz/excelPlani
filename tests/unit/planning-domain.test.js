@@ -85,6 +85,10 @@ describe("planning filters and metrics", () => {
       completedOnTime: 1,
       completedLate: 0,
       behindSchedule: 2,
+      tasksInProgress: 3,
+      timeElapsed: null,
+      timeRemaining: null,
+      daysRemaining: null,
       excluded: 1,
     });
     expect(deriveDashboard(tasks, { ...base, assignees: ["Ana"], completion: "completed" }).tasks.map(({ id }) => id))
@@ -97,7 +101,7 @@ describe("planning filters and metrics", () => {
 
   it("distinguishes an empty set from a zero ratio", () => {
     const result = deriveDashboard([], { controlDate: "2026-01-15", completion: "all" });
-    expect(result.metrics).toEqual({ total: 0, completed: 0, completionRatio: null, delayed: 0, completedOnTime: 0, completedLate: 0, behindSchedule: 0, excluded: 0 });
+    expect(result.metrics).toEqual({ total: 0, completed: 0, completionRatio: null, delayed: 0, completedOnTime: 0, completedLate: 0, behindSchedule: 0, tasksInProgress: 0, timeElapsed: null, timeRemaining: null, daysRemaining: null, excluded: 0 });
   });
 
   it("classifies completedOnTime, completedLate and behindSchedule correctly", () => {

@@ -149,10 +149,6 @@ function svgElement(document, tag, attributes = {}, text = null) {
   return element;
 }
 
-function formatRatio(value) {
-  return value === null ? "—" : `${Math.round(value * 100)} %`;
-}
-
 function filterContext(filters) {
   const parts = [`Fecha de control: ${filters.controlDate ?? "sin definir"}`];
   if (filters.assignees.length) parts.push(`Asignado: ${filters.assignees.join(", ")}`);
@@ -177,14 +173,17 @@ export function createDashboardView({ document, store, handlers = {} }) {
   const elements = {
     sheet: byId("project-sheet"), controlDate: byId("control-date"), assignees: byId("assignee-filter"),
     dateFrom: byId("range-start"), dateTo: byId("range-end"), completion: byId("completion-filter"),
-    form: byId("dashboard-filters"), total: byId("kpi-total"), completed: byId("kpi-completed"),
-    ratio: byId("kpi-completion-ratio"), delayed: byId("kpi-delayed"), context: byId("active-filter-context"),
+    form: byId("dashboard-filters"), total: byId("kpi-total"), context: byId("active-filter-context"),
     loading: byId("loading-status"), error: byId("global-error"), warnings: byId("quality-warnings"),
     sourceStatus: byId("source-status"), sourceFile: byId("source-file-name"), list: byId("gantt-task-list"),
     chart: byId("gantt-chart"), scroll: byId("gantt-scroll-region"), empty: byId("empty-state"),
     dialog: byId("task-details"), detailTitle: byId("task-details-title"), detail: byId("task-detail-content"),
+    timeElapsed: byId("kpi-time-elapsed"),
+    timeRemaining: byId("kpi-time-remaining"),
+    daysRemaining: byId("kpi-days-remaining"),
     closedOnTime: byId("kpi-closed-on-time"),
     closedLate: byId("kpi-closed-late"),
+    inProgress: byId("kpi-in-progress"),
     behindSchedule: byId("kpi-behind-schedule"),
   };
   let lastTaskTrigger = null;
@@ -389,11 +388,15 @@ export function createDashboardView({ document, store, handlers = {} }) {
     setDateValue(elements.dateTo, state.filters.dateTo);
     elements.completion.value = state.filters.completion;
     setText(elements.total, String(state.metrics.total));
-    setText(elements.completed, String(state.metrics.completed));
-    setText(elements.ratio, formatRatio(state.metrics.completionRatio));
-    setText(elements.delayed, String(state.metrics.delayed));
+    const te = state.metrics.timeElapsed;
+    const tr = state.metrics.timeRemaining;
+    const dr = state.metrics.daysRemaining;
+    setText(elements.timeElapsed, te !== null ? `${te} %` : "—");
+    setText(elements.timeRemaining, tr !== null ? `${tr} %` : "—");
+    setText(elements.daysRemaining, dr !== null ? `${dr} días` : "Días hasta fecha fin");
     setText(elements.closedOnTime, String(state.metrics.completedOnTime ?? 0));
     setText(elements.closedLate, String(state.metrics.completedLate ?? 0));
+    setText(elements.inProgress, String(state.metrics.tasksInProgress ?? 0));
     setText(elements.behindSchedule, String(state.metrics.behindSchedule ?? 0));
     setText(elements.context, filterContext(state.filters));
     setText(elements.sourceFile, state.sourceFile || "Libro configurado en el código");

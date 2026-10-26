@@ -149,7 +149,7 @@ function overlapsDateRange(task, dateFrom, dateTo, options) {
   return (!from || interval[1] >= from) && (!to || interval[0] <= to);
 }
 
-export function deriveDashboard(tasks, filters, { date1904 = false } = {}) {
+export function deriveDashboard(tasks, filters, { date1904 = false, projectStart = null, projectEnd = null } = {}) {
   const options = { date1904 };
   const controlDate = normalizeDateOnly(filters.controlDate, options);
   const selectedAssignees = new Set(filters.assignees ?? []);
@@ -187,6 +187,26 @@ export function deriveDashboard(tasks, filters, { date1904 = false } = {}) {
   const completedOnTime = derivedTasks.filter((task) => task.classification.completedOnTime).length;
   const completedLate = derivedTasks.filter((task) => task.classification.completedLate).length;
   const behindSchedule = derivedTasks.filter((task) => task.classification.behindSchedule).length;
+  const tasksInProgress = total - completed;
+
+  const ps = normalizeDateOnly(projectStart);
+  const pe = normalizeDateOnly(projectEnd);
+  const ctrl = normalizeDateOnly(filters.controlDate);
+  let timeElapsed = null;
+  let timeRemaining = null;
+  let daysRemaining = null;
+  if (ps && pe && ctrl) {
+    const sOrd = ordinal(ps);
+    const eOrd = ordinal(pe);
+    const cOrd = ordinal(ctrl);
+    const duration = eOrd - sOrd;
+    if (duration > 0) {
+      timeElapsed = Math.round((cOrd - sOrd) / duration * 100);
+      timeRemaining = 100 - timeElapsed;
+    }
+    daysRemaining = eOrd - cOrd;
+  }
+
   return Object.freeze({
     tasks: Object.freeze(derivedTasks),
     metrics: Object.freeze({
@@ -197,6 +217,10 @@ export function deriveDashboard(tasks, filters, { date1904 = false } = {}) {
       completedOnTime,
       completedLate,
       behindSchedule,
+      tasksInProgress,
+      timeElapsed,
+      timeRemaining,
+      daysRemaining,
       excluded,
     }),
   });
