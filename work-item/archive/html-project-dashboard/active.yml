@@ -8,9 +8,9 @@ track: "new-feature"
 technology: "web-standalone"
 framework_version: "1.5.0"
 
-status: active
+status: closed
 current_phase: 10
-phase_status: "Phase 10 archive in progress — retrospective created, physical move pending"
+phase_status: "Phase 10 archive complete — work-item physically relocated to work-item/archive/html-project-dashboard"
 
 phases_completed:
   - phase: 1
@@ -50,6 +50,11 @@ phases_completed:
     artifact: "09-release/release-notes.md"
     approved_by: "user"
     notes: "Tag v0.1.0 created on 138b37bb0d88175c81a9889acd8327bef9a7603d. Local-qa deployment validated. User approved phase_9_to_10 transition."
+  - phase: 10
+    completed_at: "2026-10-26"
+    artifact: "10-archive/retrospective.md"
+    approved_by: "user"
+    notes: "Archive commit c270cbe718fdfceb18af1d8ce774543484cd1555. Work-item physically moved to work-item/archive/html-project-dashboard/."
 phases_skipped: []
 blockers: []
 

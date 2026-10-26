@@ -8,7 +8,7 @@
 - Track: `new-feature`
 - Technology: `web-standalone`
 - Release: `v0.1.0` — tag on commit `138b37bb0d88175c81a9889acd8327bef9a7603d`
-- Archive commit hash: **TBD** — will be updated after archive movement commit
+- Archive commit hash: `c270cbe718fdfceb18af1d8ce774543484cd1555`
 
 ---
 
@@ -96,7 +96,7 @@
 
 - Archive command: `git mv work-item/html-project-dashboard work-item/archive/html-project-dashboard`
 - Archive commit message: `chore(archive): move html-project-dashboard to work-item/archive after Phase 10 closure`
-- Archive commit hash: **TBD** — to be updated after commit is executed
+- Archive commit hash: `c270cbe718fdfceb18af1d8ce774543484cd1555`
 - Original path: `work-item/html-project-dashboard/`
 - Archive path: `work-item/archive/html-project-dashboard/`
 - Archived by: Axet Agent
