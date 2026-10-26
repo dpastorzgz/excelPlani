@@ -43,7 +43,7 @@ updated: "2026-10-26"
 
 ## Archive commit hash
 
-_(Se registrará al ejecutar el commit de archivo)_
+`647c361` — chore(archive): move dashboard-cr-005 to work-item/archive after Phase 10 closure
 
 ---
 
