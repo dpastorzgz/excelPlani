@@ -335,7 +335,7 @@ export function createDashboardView({ document, store, handlers = {} }) {
       group.addEventListener("pointerenter", () => setRowHighlight(row.task.id, true));
       group.addEventListener("pointerleave", () => setRowHighlight(row.task.id, false));
       rowGroupsById.set(row.task.id, group);
-      const delayed = row.task.classification?.delayed;
+      const delayed = row.task.classification?.delayed || row.task.classification?.behindSchedule;
       if (row.task.milestone) {
         const msCx = row.x + layout.pixelsPerDay / 2;
         group.append(svgElement(document, "rect", {
