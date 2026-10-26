@@ -126,6 +126,7 @@ export function computeGanttLayout(tasks, {
     years,
     firstTaskX: (firstTaskOrdinal - startOrdinal) * pixelsPerDay,
     controlX: controlOrdinal === null ? null : (controlOrdinal - startOrdinal) * pixelsPerDay,
+    pixelsPerDay,
   });
 }
 
@@ -182,6 +183,9 @@ export function createDashboardView({ document, store, handlers = {} }) {
     sourceStatus: byId("source-status"), sourceFile: byId("source-file-name"), list: byId("gantt-task-list"),
     chart: byId("gantt-chart"), scroll: byId("gantt-scroll-region"), empty: byId("empty-state"),
     dialog: byId("task-details"), detailTitle: byId("task-details-title"), detail: byId("task-detail-content"),
+    closedOnTime: byId("kpi-closed-on-time"),
+    closedLate: byId("kpi-closed-late"),
+    behindSchedule: byId("kpi-behind-schedule"),
   };
   let lastTaskTrigger = null;
 
@@ -334,10 +338,11 @@ export function createDashboardView({ document, store, handlers = {} }) {
       rowGroupsById.set(row.task.id, group);
       const delayed = row.task.classification?.delayed;
       if (row.task.milestone) {
+        const msCx = row.x + layout.pixelsPerDay / 2;
         group.append(svgElement(document, "rect", {
           class: `gantt-milestone${delayed ? " is-delayed" : ""}`,
-          x: row.x, y: row.y + 16, width: 16, height: 16,
-          transform: `rotate(45 ${row.x + 8} ${row.y + 24})`,
+          x: msCx - 8, y: row.y + 16, width: 16, height: 16,
+          transform: `rotate(45 ${msCx} ${row.y + 24})`,
         }));
       } else {
         group.append(svgElement(document, "rect", {
@@ -387,6 +392,9 @@ export function createDashboardView({ document, store, handlers = {} }) {
     setText(elements.completed, String(state.metrics.completed));
     setText(elements.ratio, formatRatio(state.metrics.completionRatio));
     setText(elements.delayed, String(state.metrics.delayed));
+    setText(elements.closedOnTime, String(state.metrics.completedOnTime ?? 0));
+    setText(elements.closedLate, String(state.metrics.completedLate ?? 0));
+    setText(elements.behindSchedule, String(state.metrics.behindSchedule ?? 0));
     setText(elements.context, filterContext(state.filters));
     setText(elements.sourceFile, state.sourceFile || "Libro configurado en el código");
     elements.loading.hidden = state.status !== "loading";

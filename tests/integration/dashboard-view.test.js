@@ -202,6 +202,22 @@ describe("dashboard view", () => {
     expect(labels[1].textContent).toBe("Avance 100%");
   });
 
+  it("renders the 3 secondary KPI cards with correct values", () => {
+    const store = createDashboardStore({
+      status: "ready",
+      tasks: [
+        sampleTask({ actualClose: "2026-01-08", plannedEnd: "2026-01-10" }),
+        sampleTask({ id: "2", actualClose: "2026-01-12", plannedEnd: "2026-01-10" }),
+        sampleTask({ id: "3", completionFraction: 0, plannedStart: "2026-01-01", plannedEnd: "2026-01-20" }),
+      ],
+      filters: { controlDate: "2026-01-15" },
+    });
+    createDashboardView({ document, store });
+    expect(document.querySelector("#kpi-closed-on-time").textContent).toBe("1");
+    expect(document.querySelector("#kpi-closed-late").textContent).toBe("1");
+    expect(document.querySelector("#kpi-behind-schedule").textContent).toBe("1");
+  });
+
   it("setDateValue does not overwrite a focused date input but updates an unfocused one", () => {
     const store = createDashboardStore({
       status: "ready",

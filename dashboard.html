@@ -127,9 +127,27 @@
               <p class="kpi-note">Completadas sobre total</p>
             </article>
             <article class="kpi-card kpi-delayed">
-              <p class="kpi-label">Retrasadas a fecha</p>
-              <output class="kpi-value" id="kpi-delayed" aria-label="Tareas retrasadas a fecha">—</output>
-              <p class="kpi-note" id="kpi-delayed-context">Pendiente de clasificación</p>
+              <p class="kpi-label">Vencidas abiertas</p>
+              <output class="kpi-value" id="kpi-delayed" aria-label="Tareas abiertas vencidas a fecha">—</output>
+              <p class="kpi-note">Sin cierre y plazo superado</p>
+            </article>
+          </div>
+
+          <div class="kpi-grid kpi-grid-secondary" aria-label="Detalle de completitud">
+            <article class="kpi-card kpi-closed-on-time">
+              <p class="kpi-label">Cerradas a tiempo</p>
+              <output class="kpi-value" id="kpi-closed-on-time" aria-label="Tareas cerradas a tiempo">—</output>
+              <p class="kpi-note">Cierre antes del plazo</p>
+            </article>
+            <article class="kpi-card kpi-closed-late">
+              <p class="kpi-label">Cerradas con retraso</p>
+              <output class="kpi-value" id="kpi-closed-late" aria-label="Tareas cerradas fuera de plazo">—</output>
+              <p class="kpi-note">Cierre después del plazo</p>
+            </article>
+            <article class="kpi-card kpi-behind-schedule">
+              <p class="kpi-label">En curso retrasadas</p>
+              <output class="kpi-value" id="kpi-behind-schedule" aria-label="Tareas en curso con avance insuficiente">—</output>
+              <p class="kpi-note">Avance menor al esperado</p>
             </article>
           </div>
 

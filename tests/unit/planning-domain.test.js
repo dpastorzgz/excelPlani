@@ -47,7 +47,7 @@ describe("planning date-only domain", () => {
     expect(classifyTaskAtDate(sample, "2026-01-07")).toMatchObject({ completed: false, delayed: false });
     expect(classifyTaskAtDate(sample, "2026-01-08")).toMatchObject({ completed: true, delayed: false });
     expect(classifyTaskAtDate(task({ actualClose: "2026-01-12" }), "2026-01-12"))
-      .toMatchObject({ completed: true, delayed: true });
+      .toMatchObject({ completed: true, delayed: false, completedLate: true });
     expect(classifyTaskAtDate(task(), "2026-01-11")).toMatchObject({ completed: false, delayed: true });
   });
 
@@ -82,6 +82,9 @@ describe("planning filters and metrics", () => {
       completed: 1,
       completionRatio: 1 / 4,
       delayed: 1,
+      completedOnTime: 1,
+      completedLate: 0,
+      behindSchedule: 2,
       excluded: 1,
     });
     expect(deriveDashboard(tasks, { ...base, assignees: ["Ana"], completion: "completed" }).tasks.map(({ id }) => id))
@@ -94,7 +97,29 @@ describe("planning filters and metrics", () => {
 
   it("distinguishes an empty set from a zero ratio", () => {
     const result = deriveDashboard([], { controlDate: "2026-01-15", completion: "all" });
-    expect(result.metrics).toEqual({ total: 0, completed: 0, completionRatio: null, delayed: 0, excluded: 0 });
+    expect(result.metrics).toEqual({ total: 0, completed: 0, completionRatio: null, delayed: 0, completedOnTime: 0, completedLate: 0, behindSchedule: 0, excluded: 0 });
+  });
+
+  it("classifies completedOnTime, completedLate and behindSchedule correctly", () => {
+    const base = { controlDate: "2026-01-15", assignees: [], dateFrom: null, dateTo: null, completion: "all" };
+    // completedOnTime: closed before target
+    const t1 = task({ id: "ct", actualClose: "2026-01-08", plannedEnd: "2026-01-10" });
+    expect(classifyTaskAtDate(t1, "2026-01-15")).toMatchObject({ completedOnTime: true, completedLate: false, delayed: false });
+    // completedLate: closed after target but before controlDate
+    const t2 = task({ id: "cl", actualClose: "2026-01-12", plannedEnd: "2026-01-10" });
+    expect(classifyTaskAtDate(t2, "2026-01-15")).toMatchObject({ completedOnTime: false, completedLate: true, delayed: false });
+    // behindSchedule: open, progress 0, 50% time elapsed
+    const t3 = task({ id: "bs", plannedStart: "2026-01-01", plannedEnd: "2026-01-21", completionFraction: 0 });
+    const cls3 = classifyTaskAtDate(t3, "2026-01-11");
+    expect(cls3.behindSchedule).toBe(true);
+    // not behindSchedule: progress adequate
+    const t4 = task({ id: "ok", plannedStart: "2026-01-01", plannedEnd: "2026-01-21", completionFraction: 0.6 });
+    expect(classifyTaskAtDate(t4, "2026-01-11").behindSchedule).toBe(false);
+    // metrics include new fields
+    const result = deriveDashboard([t1, t2, t3], base);
+    expect(result.metrics.completedOnTime).toBe(1);
+    expect(result.metrics.completedLate).toBe(1);
+    expect(result.metrics.behindSchedule).toBe(1);
   });
 
   it("derives 1,000 tasks within 300 ms", () => {

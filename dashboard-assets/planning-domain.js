@@ -62,6 +62,19 @@ function looksCurrentlyComplete(task) {
       .includes(status);
 }
 
+function ordinal(dateOnly) {
+  const [year, month, day] = dateOnly.split("-").map(Number);
+  return Math.floor(Date.UTC(year, month - 1, day) / 86_400_000);
+}
+
+function computeExpectedProgress(plannedStart, plannedEnd, control) {
+  const startOrd = ordinal(plannedStart);
+  const endOrd = ordinal(plannedEnd);
+  const ctrlOrd = ordinal(control);
+  if (endOrd <= startOrd) return ctrlOrd >= endOrd ? 1 : 0;
+  return Math.min(1, Math.max(0, (ctrlOrd - startOrd) / (endOrd - startOrd)));
+}
+
 export function classifyTaskAtDate(task, controlDate, options = {}) {
   const control = normalizeDateOnly(controlDate, options);
   const target = getTargetDate(task, options);
@@ -75,6 +88,10 @@ export function classifyTaskAtDate(task, controlDate, options = {}) {
       valid: false,
       completed: false,
       delayed: false,
+      completedOnTime: false,
+      completedLate: false,
+      overdueWhileOpen: false,
+      behindSchedule: false,
       completionKnown: false,
       delayKnown: false,
       target,
@@ -89,11 +106,22 @@ export function classifyTaskAtDate(task, controlDate, options = {}) {
   const completed = Boolean(actualClose && actualClose <= control);
   const completionUnknown = looksCurrentlyComplete(task) && !actualClose;
   const overdueWhileOpen = target < control && !completed && !completionUnknown;
+  const completedOnTime = completed && actualClose <= target;
   const completedLate = completed && actualClose > target;
+  const expectedProgress = completionUnknown || completed
+    ? 0
+    : computeExpectedProgress(plannedStart, plannedEnd, control);
+  const behindSchedule = !completed && !completionUnknown
+    && Number(task.completionFraction) < expectedProgress;
+
   return Object.freeze({
     valid: true,
     completed,
-    delayed: overdueWhileOpen || completedLate,
+    delayed: overdueWhileOpen,
+    completedOnTime,
+    completedLate,
+    overdueWhileOpen,
+    behindSchedule,
     completionKnown: !completionUnknown,
     delayKnown: !completionUnknown,
     target,
@@ -156,6 +184,9 @@ export function deriveDashboard(tasks, filters, { date1904 = false } = {}) {
   const total = derivedTasks.length;
   const completed = derivedTasks.filter((task) => task.classification.completed).length;
   const delayed = derivedTasks.filter((task) => task.classification.delayed).length;
+  const completedOnTime = derivedTasks.filter((task) => task.classification.completedOnTime).length;
+  const completedLate = derivedTasks.filter((task) => task.classification.completedLate).length;
+  const behindSchedule = derivedTasks.filter((task) => task.classification.behindSchedule).length;
   return Object.freeze({
     tasks: Object.freeze(derivedTasks),
     metrics: Object.freeze({
@@ -163,6 +194,9 @@ export function deriveDashboard(tasks, filters, { date1904 = false } = {}) {
       completed,
       completionRatio: total === 0 ? null : completed / total,
       delayed,
+      completedOnTime,
+      completedLate,
+      behindSchedule,
       excluded,
     }),
   });
